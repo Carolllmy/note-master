@@ -289,22 +289,12 @@
             background: #333;
         }
 
-        .key.playing {
-            animation: keyGlow 0.3s ease-out;
-        }
-
         .key.correct {
             animation: successGlow 0.5s ease-out;
         }
 
         .key.incorrect {
             animation: errorGlow 0.5s ease-out;
-        }
-
-        @keyframes keyGlow {
-            0% { box-shadow: 0 0 0 0 var(--accent-bright); }
-            50% { box-shadow: 0 0 0 4px var(--accent-bright); }
-            100% { box-shadow: 0 0 0 0 var(--accent-bright); }
         }
 
         @keyframes successGlow {
@@ -611,52 +601,75 @@
             }
         }
 
-        // Piano sound synthesis with ADSR envelope
-        function playNote(frequency, duration = 0.5, velocity = 1) {
+        // Realistic piano sound synthesis using layered harmonics
+        function playNote(frequency, duration = 0.5, velocity = 0.7) {
             if (!audioContext) return;
 
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            // Use multiple oscillators for richer piano sound
-            const oscillator2 = audioContext.createOscillator();
-            const gainNode2 = audioContext.createGain();
-            
-            // Main oscillator (fundamental)
-            oscillator.type = 'triangle';
-            oscillator.frequency.value = frequency;
-            
-            // Second oscillator (harmonic)
-            oscillator2.type = 'sine';
-            oscillator2.frequency.value = frequency * 2;
-            
-            // Connect oscillators
-            oscillator.connect(gainNode);
-            oscillator2.connect(gainNode2);
-            gainNode.connect(masterGain);
-            gainNode2.connect(masterGain);
-            
-            // ADSR envelope
             const now = audioContext.currentTime;
-            const attack = 0.01;
-            const decay = 0.1;
-            const sustain = 0.3;
-            const release = 0.5;
+            const compressor = audioContext.createDynamicsCompressor();
+            compressor.connect(masterGain);
             
-            gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(velocity * 0.8, now + attack);
-            gainNode.gain.exponentialRampToValueAtTime(velocity * sustain, now + attack + decay);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration + release);
+            // Piano has rich harmonics — layer multiple partials
+            const harmonics = [
+                { ratio: 1,    gain: 1.0,  type: 'sine' },    // fundamental
+                { ratio: 2,    gain: 0.5,  type: 'sine' },    // 2nd harmonic
+                { ratio: 3,    gain: 0.25, type: 'sine' },    // 3rd
+                { ratio: 4,    gain: 0.15, type: 'sine' },    // 4th
+                { ratio: 5,    gain: 0.08, type: 'sine' },    // 5th
+                { ratio: 6,    gain: 0.04, type: 'sine' },    // 6th
+                { ratio: 0.5,  gain: 0.1,  type: 'sine' },    // sub-harmonic for warmth
+            ];
             
-            gainNode2.gain.setValueAtTime(0, now);
-            gainNode2.gain.linearRampToValueAtTime(velocity * 0.2, now + attack);
-            gainNode2.gain.exponentialRampToValueAtTime(velocity * sustain * 0.3, now + attack + decay);
-            gainNode2.gain.exponentialRampToValueAtTime(0.001, now + duration + release);
+            // Slight detuning for natural feel
+            const detune = (Math.random() - 0.5) * 3;
             
-            oscillator.start(now);
-            oscillator2.start(now);
-            oscillator.stop(now + duration + release);
-            oscillator2.stop(now + duration + release);
+            harmonics.forEach(h => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = h.type;
+                osc.frequency.value = frequency * h.ratio;
+                osc.detune.value = detune * h.ratio;
+                
+                osc.connect(gain);
+                gain.connect(compressor);
+                
+                // Piano-like envelope: sharp attack, quick decay, gentle sustain, long release
+                const peakGain = velocity * h.gain * 0.3;
+                const sustainGain = peakGain * 0.15;
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(peakGain, now + 0.005);           // very fast attack (hammer strike)
+                gain.gain.exponentialRampToValueAtTime(peakGain * 0.4, now + 0.08); // quick initial decay
+                gain.gain.exponentialRampToValueAtTime(sustainGain, now + 0.4);     // slower secondary decay
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration + 1.2);// long release (string ring)
+                
+                osc.start(now);
+                osc.stop(now + duration + 1.5);
+            });
+            
+            // Add a subtle "hammer" noise burst for attack realism
+            const noiseLen = 0.02;
+            const bufferSize = audioContext.sampleRate * noiseLen;
+            const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const noiseData = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                noiseData[i] = (Math.random() * 2 - 1) * 0.3;
+            }
+            const noiseSource = audioContext.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+            const noiseGain = audioContext.createGain();
+            const noiseFilter = audioContext.createBiquadFilter();
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.value = frequency * 4;
+            noiseFilter.Q.value = 0.5;
+            noiseSource.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(compressor);
+            noiseGain.gain.setValueAtTime(velocity * 0.15, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + noiseLen);
+            noiseSource.start(now);
+            noiseSource.stop(now + noiseLen);
         }
 
         // Metronome click sound
@@ -780,85 +793,44 @@
                 }
             }
             
-            // Countdown: play one measure of beats before player's turn
-            showMessage('Get ready...', '');
-            await new Promise(resolve => setTimeout(resolve, 400));
-            for (let beat = 0; beat < 4; beat++) {
-                playMetronome();
-                showMessage(`${4 - beat}`, '');
-                await new Promise(resolve => setTimeout(resolve, beatInterval));
-            }
+            // Brief pause then player's turn
+            await new Promise(resolve => setTimeout(resolve, 600));
             
             // Start listening phase
             gameState.phase = 'listening';
             gameState.sequenceIndex = 0;
-            gameState.userInput = [];
-            gameState.lastInputTime = Date.now();
             showMessage('Your turn!', '');
             updateUI();
         }
 
-        // Handle user key press
+        // Handle user key press — just check note order, no timing
         function handleKeyPress(note) {
             if (gameState.phase !== 'listening') return;
             
-            const currentTime = Date.now();
             const expectedItem = gameState.sequence[gameState.sequenceIndex];
-            
             if (!expectedItem) return;
             
             const key = document.querySelector(`[data-note="${note}"]`);
             const frequency = parseFloat(key.dataset.freq);
             
             // Play the note
-            playNote(frequency, 0.2);
+            playNote(frequency, 0.3);
             
             // Check if correct note
-            const isCorrectNote = note === expectedItem.note;
+            const isCorrect = note === expectedItem.note;
             
-            // Check timing
-            const expectedTime = gameState.lastInputTime + expectedItem.duration;
-            const timingError = Math.abs(currentTime - expectedTime);
-            const isCorrectTiming = timingError <= gameState.tolerance;
-            
-            // Record user input
-            gameState.userInput.push({
-                note: note,
-                time: currentTime,
-                correct: isCorrectNote && isCorrectTiming
-            });
-            
-            // Visual feedback
-            if (isCorrectNote && isCorrectTiming) {
+            if (isCorrect) {
                 key.classList.add('correct');
-                setTimeout(() => key.classList.remove('correct'), 500);
+                setTimeout(() => key.classList.remove('correct'), 400);
+                gameState.sequenceIndex++;
+                
+                // Check if sequence is complete
+                if (gameState.sequenceIndex >= gameState.sequence.length) {
+                    handleSequenceSuccess();
+                }
             } else {
                 key.classList.add('incorrect');
-                setTimeout(() => key.classList.remove('incorrect'), 500);
-                
-                // Show failure immediately if wrong note
-                if (!isCorrectNote) {
-                    handleSequenceFailure();
-                    return;
-                }
-            }
-            
-            gameState.lastInputTime = currentTime;
-            gameState.sequenceIndex++;
-            
-            // Check if sequence is complete
-            if (gameState.sequenceIndex >= gameState.sequence.length) {
-                handleSequenceComplete();
-            }
-        }
-
-        // Handle sequence completion
-        function handleSequenceComplete() {
-            const allCorrect = gameState.userInput.every(input => input.correct);
-            
-            if (allCorrect) {
-                handleSequenceSuccess();
-            } else {
+                setTimeout(() => key.classList.remove('incorrect'), 400);
                 handleSequenceFailure();
             }
         }
@@ -868,11 +840,9 @@
             gameState.phase = 'success';
             gameState.streak++;
             
-            // Calculate score based on level, streak, and timing accuracy
             const baseScore = gameState.currentLevel * 10;
             const streakBonus = gameState.streak * 5;
-            const timingBonus = calculateTimingBonus();
-            const totalScore = baseScore + streakBonus + timingBonus;
+            const totalScore = baseScore + streakBonus;
             
             gameState.score += totalScore;
             
@@ -900,20 +870,17 @@
             }, 1000);
         }
 
-        // Highlight correct sequence
+        // Replay correct sequence (audio only, no highlights)
         async function highlightCorrectSequence() {
-            showMessage('Here\'s the correct sequence:', '');
+            showMessage('Listen again...', '');
             
             for (let i = 0; i < gameState.sequence.length; i++) {
                 const item = gameState.sequence[i];
                 const key = document.querySelector(`[data-note="${item.note}"]`);
-                
-                key.classList.add('correct');
                 const frequency = parseFloat(key.dataset.freq);
                 playNote(frequency, item.duration / 1000 * 0.8);
                 
                 await new Promise(resolve => setTimeout(resolve, item.duration * 0.8));
-                key.classList.remove('correct');
                 
                 if (i < gameState.sequence.length - 1) {
                     await new Promise(resolve => setTimeout(resolve, 100));
@@ -921,19 +888,6 @@
             }
             
             document.getElementById('retryLevel').style.display = 'inline-block';
-        }
-
-        // Calculate timing bonus
-        function calculateTimingBonus() {
-            if (gameState.userInput.length === 0) return 0;
-            
-            const avgTimingAccuracy = gameState.userInput.reduce((sum, input) => {
-                const expectedTime = gameState.sequence[gameState.userInput.indexOf(input)].duration;
-                const accuracy = Math.max(0, 1 - (Math.abs(input.time - expectedTime) / gameState.tolerance));
-                return sum + accuracy;
-            }, 0) / gameState.userInput.length;
-            
-            return Math.floor(avgTimingAccuracy * 20);
         }
 
         // Show level announcement
