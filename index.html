@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Master - Piano Memory Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --text-primary: #eee;
+            --text-secondary: #bbb;
+            --accent: #0f3460;
+            --accent-bright: #533483;
+            --white-key: #f8f8f8;
+            --black-key: #1a1a1a;
+            --success: #4ade80;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --border: #333;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --key-shadow: rgba(0, 0, 0, 0.2);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1a1a2e;
+            --text-secondary: #64748b;
+            --accent: #e2e8f0;
+            --accent-bright: #7c3aed;
+            --white-key: #ffffff;
+            --black-key: #1a1a1a;
+            --border: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --key-shadow: rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            overflow-x: hidden;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-bright);
+        }
+
+        .theme-toggle {
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1.2rem;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background: var(--accent-bright);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .welcome-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .welcome-title {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-bright), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .play-button {
+            background: var(--accent-bright);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+
+        .play-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--shadow);
+        }
+
+        .game-ui {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .game-header {
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-bright);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .game-phase {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        .game-messages {
+            text-align: center;
+            margin-bottom: 2rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message {
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            background: var(--accent);
+            color: var(--text-primary);
+            display: inline-block;
+            transition: var(--transition);
+        }
+
+        .message.success {
+            background: var(--success);
+            color: white;
+        }
+
+        .message.error {
+            background: var(--error);
+            color: white;
+        }
+
+        .piano-container {
+            margin-top: auto;
+            padding: 2rem 1rem;
+        }
+
+        .piano {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .key {
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+            transition: var(--transition);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 1rem;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .key.white {
+            width: 60px;
+            height: 200px;
+            background: var(--white-key);
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px var(--key-shadow);
+            z-index: 1;
+            color: var(--text-secondary);
+        }
+
+        .key.black {
+            width: 36px;
+            height: 120px;
+            background: var(--black-key);
+            border: 1px solid #000;
+            box-shadow: 0 2px 8px var(--shadow);
+            z-index: 2;
+            position: absolute;
+            color: #bbb;
+        }
+
+        /* Black key positioning */
+        .key.black[data-note="C#4"] { left: 42px; }
+        .key.black[data-note="D#4"] { left: 102px; }
+        .key.black[data-note="F#4"] { left: 222px; }
+        .key.black[data-note="G#4"] { left: 282px; }
+        .key.black[data-note="A#4"] { left: 342px; }
+
+        .key:active, .key.pressed {
+            transform: translateY(2px);
+        }
+
+        .key.white:active, .key.white.pressed {
+            background: #e8e8e8;
+        }
+
+        .key.black:active, .key.black.pressed {
+            background: #333;
+        }
+
+        .key.playing {
+            animation: keyGlow 0.3s ease-out;
+        }
+
+        .key.correct {
+            animation: successGlow 0.5s ease-out;
+        }
+
+        .key.incorrect {
+            animation: errorGlow 0.5s ease-out;
+        }
+
+        @keyframes keyGlow {
+            0% { box-shadow: 0 0 0 0 var(--accent-bright); }
+            50% { box-shadow: 0 0 0 4px var(--accent-bright); }
+            100% { box-shadow: 0 0 0 0 var(--accent-bright); }
+        }
+
+        @keyframes successGlow {
+            0% { box-shadow: 0 0 0 0 var(--success); }
+            50% { box-shadow: 0 0 0 6px var(--success); }
+            100% { box-shadow: 0 0 0 0 var(--success); }
+        }
+
+        @keyframes errorGlow {
+            0% { box-shadow: 0 0 0 0 var(--error); }
+            50% { box-shadow: 0 0 0 6px var(--error); }
+            100% { box-shadow: 0 0 0 0 var(--error); }
+        }
+
+        .controls {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+        }
+
+        .btn {
+            background: var(--accent-bright);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin: 0 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px var(--shadow);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.secondary {
+            background: var(--accent);
+            color: var(--text-primary);
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .piano {
+                transform: scale(0.85);
+            }
+
+            .key.white {
+                width: 50px;
+                height: 180px;
+            }
+
+            .key.black {
+                width: 30px;
+                height: 110px;
+            }
+
+            .key.black[data-note="C#4"] { left: 35px; }
+            .key.black[data-note="D#4"] { left: 85px; }
+            .key.black[data-note="F#4"] { left: 185px; }
+            .key.black[data-note="G#4"] { left: 235px; }
+            .key.black[data-note="A#4"] { left: 285px; }
+
+            .welcome-title {
+                font-size: 2.5rem;
+            }
+
+            .game-stats {
+                gap: 0.5rem;
+            }
+
+            .stat-value {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Animations */
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .pulse {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .level-announcement {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--accent-bright);
+            color: white;
+            padding: 2rem 3rem;
+            border-radius: 20px;
+            font-size: 2rem;
+            font-weight: 700;
+            z-index: 1000;
+            box-shadow: 0 10px 40px var(--shadow);
+            animation: levelAnnounce 2s ease-out forwards;
+        }
+
+        @keyframes levelAnnounce {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-bright), var(--success));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🎹 Note Master</div>
+        <button class="theme-toggle" id="themeToggle">🌙</button>
+    </div>
+
+    <div class="main-content">
+        <!-- Welcome Screen -->
+        <div class="welcome-screen" id="welcomeScreen">
+            <h1 class="welcome-title">Note Master</h1>
+            <p class="welcome-subtitle">Master the piano through memory and rhythm</p>
+            <button class="play-button" id="playButton">Start Playing</button>
+        </div>
+
+        <!-- Game UI -->
+        <div class="game-ui" id="gameUI">
+            <div class="game-header">
+                <div class="game-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="levelValue">1</div>
+                        <div class="stat-label">Level</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="scoreValue">0</div>
+                        <div class="stat-label">Score</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="streakValue">0</div>
+                        <div class="stat-label">Streak</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="game-phase" id="gamePhase">Get Ready!</div>
+            </div>
+
+            <div class="game-area">
+                <div class="game-messages">
+                    <div class="message" id="gameMessage">Listen carefully to the sequence</div>
+                </div>
+
+                <div class="piano-container">
+                    <div class="piano" id="piano">
+                        <!-- White keys -->
+                        <div class="key white" data-note="C4" data-freq="261.63">C</div>
+                        <div class="key white" data-note="D4" data-freq="293.66">D</div>
+                        <div class="key white" data-note="E4" data-freq="329.63">E</div>
+                        <div class="key white" data-note="F4" data-freq="349.23">F</div>
+                        <div class="key white" data-note="G4" data-freq="392.00">G</div>
+                        <div class="key white" data-note="A4" data-freq="440.00">A</div>
+                        <div class="key white" data-note="B4" data-freq="493.88">B</div>
+                        <div class="key white" data-note="C5" data-freq="523.25">C</div>
+                        
+                        <!-- Black keys -->
+                        <div class="key black" data-note="C#4" data-freq="277.18">C#</div>
+                        <div class="key black" data-note="D#4" data-freq="311.13">D#</div>
+                        <div class="key black" data-note="F#4" data-freq="369.99">F#</div>
+                        <div class="key black" data-note="G#4" data-freq="415.30">G#</div>
+                        <div class="key black" data-note="A#4" data-freq="466.16">A#</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="startRound">Listen to Sequence</button>
+                <button class="btn secondary" id="retryLevel" style="display: none;">Retry Level</button>
+                <button class="btn secondary" id="backToMenu">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Audio Context and Synthesis
+        let audioContext;
+        let masterGain;
+
+        // Game State
+        let gameState = {
+            currentLevel: 1,
+            score: 0,
+            streak: 0,
+            highScore: 0,
+            phase: 'waiting', // waiting, playing, listening, replaying, success, failure
+            sequence: [],
+            userInput: [],
+            sequenceIndex: 0,
+            lastInputTime: 0,
+            tolerance: 200, // ms timing tolerance
+            bpm: 100
+        };
+
+        // Musical patterns and progressions for intelligent sequence generation
+        const musicalPatterns = {
+            scales: {
+                cMajor: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'],
+                cMajorPentatonic: ['C4', 'D4', 'E4', 'G4', 'A4'],
+                gMajor: ['G4', 'A4', 'B4', 'C5'],
+                fMajor: ['F4', 'G4', 'A4', 'Bb4']
+            },
+            arpeggios: {
+                cMajor: ['C4', 'E4', 'G4', 'C5'],
+                fMajor: ['F4', 'A4', 'C5'],
+                gMajor: ['G4', 'B4', 'D5']
+            },
+            intervals: {
+                thirds: [['C4', 'E4'], ['D4', 'F4'], ['E4', 'G4'], ['F4', 'A4']],
+                fifths: [['C4', 'G4'], ['D4', 'A4'], ['E4', 'B4'], ['F4', 'C5']],
+                octaves: [['C4', 'C5']]
+            }
+        };
+
+        // Level configurations
+        const levelConfigs = [
+            // Levels 1-3: Quarter notes only, C D E (3 keys)
+            { keys: ['C4', 'D4', 'E4'], length: 4, rhythms: ['quarter'], bpm: 100, patterns: ['simple'] },
+            { keys: ['C4', 'D4', 'E4'], length: 4, rhythms: ['quarter'], bpm: 100, patterns: ['simple'] },
+            { keys: ['C4', 'D4', 'E4'], length: 4, rhythms: ['quarter'], bpm: 105, patterns: ['scale'] },
+            
+            // Levels 4-6: Quarter notes, C D E F G (5 white keys)
+            { keys: ['C4', 'D4', 'E4', 'F4', 'G4'], length: 4, rhythms: ['quarter'], bpm: 100, patterns: ['scale'] },
+            { keys: ['C4', 'D4', 'E4', 'F4', 'G4'], length: 4, rhythms: ['quarter'], bpm: 105, patterns: ['scale', 'arpeggio'] },
+            { keys: ['C4', 'D4', 'E4', 'F4', 'G4'], length: 5, rhythms: ['quarter'], bpm: 110, patterns: ['scale', 'arpeggio'] },
+            
+            // Levels 7-9: Introduce half notes, all white keys
+            { keys: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4'], length: 4, rhythms: ['quarter', 'half'], bpm: 100, patterns: ['scale', 'arpeggio'] },
+            { keys: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4'], length: 5, rhythms: ['quarter', 'half'], bpm: 105, patterns: ['scale', 'arpeggio'] },
+            { keys: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'], length: 6, rhythms: ['quarter', 'half'], bpm: 110, patterns: ['scale', 'arpeggio', 'interval'] },
+            
+            // Levels 10-12: Add sharps/flats
+            { keys: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4'], length: 6, rhythms: ['quarter', 'half'], bpm: 110, patterns: ['scale', 'arpeggio'] },
+            { keys: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'A#4', 'B4'], length: 7, rhythms: ['quarter', 'half'], bpm: 115, patterns: ['scale', 'arpeggio', 'interval'] },
+            { keys: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'A#4', 'B4', 'C5'], length: 8, rhythms: ['quarter', 'half'], bpm: 120, patterns: ['scale', 'arpeggio', 'interval'] },
+            
+            // Levels 13-15: Introduce eighth notes
+            { keys: ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4'], length: 8, rhythms: ['quarter', 'half', 'eighth'], bpm: 120, patterns: ['scale', 'arpeggio', 'interval'] },
+            { keys: ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4'], length: 9, rhythms: ['quarter', 'half', 'eighth'], bpm: 125, patterns: ['scale', 'arpeggio', 'interval', 'chromatic'] },
+            { keys: ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5'], length: 10, rhythms: ['quarter', 'half', 'eighth'], bpm: 130, patterns: ['scale', 'arpeggio', 'interval', 'chromatic'] }
+        ];
+
+        // Initialize audio context
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                masterGain = audioContext.createGain();
+                masterGain.connect(audioContext.destination);
+                masterGain.gain.value = 0.3;
+            }
+        }
+
+        // Piano sound synthesis with ADSR envelope
+        function playNote(frequency, duration = 0.5, velocity = 1) {
+            if (!audioContext) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // Use multiple oscillators for richer piano sound
+            const oscillator2 = audioContext.createOscillator();
+            const gainNode2 = audioContext.createGain();
+            
+            // Main oscillator (fundamental)
+            oscillator.type = 'triangle';
+            oscillator.frequency.value = frequency;
+            
+            // Second oscillator (harmonic)
+            oscillator2.type = 'sine';
+            oscillator2.frequency.value = frequency * 2;
+            
+            // Connect oscillators
+            oscillator.connect(gainNode);
+            oscillator2.connect(gainNode2);
+            gainNode.connect(masterGain);
+            gainNode2.connect(masterGain);
+            
+            // ADSR envelope
+            const now = audioContext.currentTime;
+            const attack = 0.01;
+            const decay = 0.1;
+            const sustain = 0.3;
+            const release = 0.5;
+            
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(velocity * 0.8, now + attack);
+            gainNode.gain.exponentialRampToValueAtTime(velocity * sustain, now + attack + decay);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration + release);
+            
+            gainNode2.gain.setValueAtTime(0, now);
+            gainNode2.gain.linearRampToValueAtTime(velocity * 0.2, now + attack);
+            gainNode2.gain.exponentialRampToValueAtTime(velocity * sustain * 0.3, now + attack + decay);
+            gainNode2.gain.exponentialRampToValueAtTime(0.001, now + duration + release);
+            
+            oscillator.start(now);
+            oscillator2.start(now);
+            oscillator.stop(now + duration + release);
+            oscillator2.stop(now + duration + release);
+        }
+
+        // Metronome click sound
+        function playMetronome() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'square';
+            oscillator.frequency.value = 800;
+            oscillator.connect(gainNode);
+            gainNode.connect(masterGain);
+            
+            const now = audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.1, now + 0.001);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 0.05);
+        }
+
+        // Generate musically intelligent sequence
+        function generateSequence(level) {
+            const config = levelConfigs[Math.min(level - 1, levelConfigs.length - 1)] || 
+                          { ...levelConfigs[levelConfigs.length - 1], length: Math.min(15 + level - 16, 20) };
+            
+            gameState.bpm = config.bpm;
+            
+            const sequence = [];
+            const availableKeys = config.keys;
+            const patterns = config.patterns;
+            const rhythms = config.rhythms;
+            
+            // Choose a musical pattern
+            const patternType = patterns[Math.floor(Math.random() * patterns.length)];
+            
+            for (let i = 0; i < config.length; i++) {
+                let note;
+                
+                // Generate note based on pattern
+                if (patternType === 'scale' && i > 0) {
+                    // Scale-like movement
+                    const lastNote = sequence[i - 1].note;
+                    const lastIndex = availableKeys.indexOf(lastNote);
+                    const direction = Math.random() > 0.5 ? 1 : -1;
+                    const step = Math.random() > 0.7 ? 2 : 1; // occasional skips
+                    let newIndex = lastIndex + (direction * step);
+                    
+                    if (newIndex < 0) newIndex = 0;
+                    if (newIndex >= availableKeys.length) newIndex = availableKeys.length - 1;
+                    
+                    note = availableKeys[newIndex];
+                } else if (patternType === 'arpeggio' && availableKeys.length >= 3) {
+                    // Arpeggio-like patterns (1-3-5 intervals)
+                    const arpeggioNotes = availableKeys.filter((_, index) => index % 2 === 0);
+                    note = arpeggioNotes[Math.floor(Math.random() * arpeggioNotes.length)];
+                } else if (patternType === 'interval' && i > 0) {
+                    // Interval-based movement
+                    const lastNote = sequence[i - 1].note;
+                    const lastIndex = availableKeys.indexOf(lastNote);
+                    const intervals = [2, 3, 4]; // thirds, fourths, fifths
+                    const interval = intervals[Math.floor(Math.random() * intervals.length)];
+                    const direction = Math.random() > 0.5 ? 1 : -1;
+                    let newIndex = lastIndex + (direction * interval);
+                    
+                    if (newIndex < 0 || newIndex >= availableKeys.length) {
+                        newIndex = lastIndex - (direction * interval);
+                    }
+                    if (newIndex < 0) newIndex = 0;
+                    if (newIndex >= availableKeys.length) newIndex = availableKeys.length - 1;
+                    
+                    note = availableKeys[newIndex];
+                } else {
+                    // Random selection or first note
+                    note = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+                }
+                
+                // Choose rhythm
+                const rhythm = rhythms[Math.floor(Math.random() * rhythms.length)];
+                let duration;
+                switch (rhythm) {
+                    case 'eighth': duration = 30000 / gameState.bpm; break;
+                    case 'quarter': duration = 60000 / gameState.bpm; break;
+                    case 'half': duration = 120000 / gameState.bpm; break;
+                    default: duration = 60000 / gameState.bpm;
+                }
+                
+                sequence.push({
+                    note: note,
+                    duration: duration,
+                    rhythm: rhythm
+                });
+            }
+            
+            return sequence;
+        }
+
+        // Play sequence with timing
+        async function playSequence(sequence) {
+            gameState.phase = 'playing';
+            updateUI();
+            
+            const beatInterval = 60000 / gameState.bpm;
+            
+            for (let i = 0; i < sequence.length; i++) {
+                const item = sequence[i];
+                
+                // Play metronome click
+                playMetronome();
+                
+                // Highlight key
+                const key = document.querySelector(`[data-note="${item.note}"]`);
+                key.classList.add('playing');
+                
+                // Play note
+                const frequency = parseFloat(key.dataset.freq);
+                playNote(frequency, item.duration / 1000);
+                
+                // Wait for the note duration
+                await new Promise(resolve => setTimeout(resolve, item.duration));
+                
+                // Remove highlight
+                key.classList.remove('playing');
+                
+                // Small gap between notes
+                if (i < sequence.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+            }
+            
+            // Start listening phase
+            gameState.phase = 'listening';
+            gameState.sequenceIndex = 0;
+            gameState.userInput = [];
+            gameState.lastInputTime = Date.now();
+            updateUI();
+        }
+
+        // Handle user key press
+        function handleKeyPress(note) {
+            if (gameState.phase !== 'listening') return;
+            
+            const currentTime = Date.now();
+            const expectedItem = gameState.sequence[gameState.sequenceIndex];
+            
+            if (!expectedItem) return;
+            
+            const key = document.querySelector(`[data-note="${note}"]`);
+            const frequency = parseFloat(key.dataset.freq);
+            
+            // Play the note
+            playNote(frequency, 0.2);
+            
+            // Check if correct note
+            const isCorrectNote = note === expectedItem.note;
+            
+            // Check timing
+            const expectedTime = gameState.lastInputTime + expectedItem.duration;
+            const timingError = Math.abs(currentTime - expectedTime);
+            const isCorrectTiming = timingError <= gameState.tolerance;
+            
+            // Record user input
+            gameState.userInput.push({
+                note: note,
+                time: currentTime,
+                correct: isCorrectNote && isCorrectTiming
+            });
+            
+            // Visual feedback
+            if (isCorrectNote && isCorrectTiming) {
+                key.classList.add('correct');
+                setTimeout(() => key.classList.remove('correct'), 500);
+            } else {
+                key.classList.add('incorrect');
+                setTimeout(() => key.classList.remove('incorrect'), 500);
+                
+                // Show failure immediately if wrong note
+                if (!isCorrectNote) {
+                    handleSequenceFailure();
+                    return;
+                }
+            }
+            
+            gameState.lastInputTime = currentTime;
+            gameState.sequenceIndex++;
+            
+            // Check if sequence is complete
+            if (gameState.sequenceIndex >= gameState.sequence.length) {
+                handleSequenceComplete();
+            }
+        }
+
+        // Handle sequence completion
+        function handleSequenceComplete() {
+            const allCorrect = gameState.userInput.every(input => input.correct);
+            
+            if (allCorrect) {
+                handleSequenceSuccess();
+            } else {
+                handleSequenceFailure();
+            }
+        }
+
+        // Handle successful sequence
+        function handleSequenceSuccess() {
+            gameState.phase = 'success';
+            gameState.streak++;
+            
+            // Calculate score based on level, streak, and timing accuracy
+            const baseScore = gameState.currentLevel * 10;
+            const streakBonus = gameState.streak * 5;
+            const timingBonus = calculateTimingBonus();
+            const totalScore = baseScore + streakBonus + timingBonus;
+            
+            gameState.score += totalScore;
+            
+            // Save progress
+            saveProgress();
+            
+            updateUI();
+            showMessage(`Perfect! +${totalScore} points`, 'success');
+            
+            // Advance to next level after delay
+            setTimeout(() => {
+                gameState.currentLevel++;
+                showLevelAnnouncement(gameState.currentLevel);
+                
+                setTimeout(() => {
+                    startNewRound();
+                }, 2000);
+            }, 1500);
+        }
+
+        // Handle failed sequence
+        function handleSequenceFailure() {
+            gameState.phase = 'failure';
+            gameState.streak = 0;
+            
+            updateUI();
+            showMessage('Not quite right. Try again!', 'error');
+            
+            // Show the correct sequence
+            setTimeout(() => {
+                highlightCorrectSequence();
+            }, 1000);
+        }
+
+        // Highlight correct sequence
+        async function highlightCorrectSequence() {
+            showMessage('Here\'s the correct sequence:', '');
+            
+            for (let i = 0; i < gameState.sequence.length; i++) {
+                const item = gameState.sequence[i];
+                const key = document.querySelector(`[data-note="${item.note}"]`);
+                
+                key.classList.add('correct');
+                const frequency = parseFloat(key.dataset.freq);
+                playNote(frequency, item.duration / 1000 * 0.8);
+                
+                await new Promise(resolve => setTimeout(resolve, item.duration * 0.8));
+                key.classList.remove('correct');
+                
+                if (i < gameState.sequence.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+            
+            document.getElementById('retryLevel').style.display = 'inline-block';
+        }
+
+        // Calculate timing bonus
+        function calculateTimingBonus() {
+            if (gameState.userInput.length === 0) return 0;
+            
+            const avgTimingAccuracy = gameState.userInput.reduce((sum, input) => {
+                const expectedTime = gameState.sequence[gameState.userInput.indexOf(input)].duration;
+                const accuracy = Math.max(0, 1 - (Math.abs(input.time - expectedTime) / gameState.tolerance));
+                return sum + accuracy;
+            }, 0) / gameState.userInput.length;
+            
+            return Math.floor(avgTimingAccuracy * 20);
+        }
+
+        // Show level announcement
+        function showLevelAnnouncement(level) {
+            const announcement = document.createElement('div');
+            announcement.className = 'level-announcement';
+            announcement.textContent = `Level ${level}`;
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => {
+                announcement.remove();
+            }, 2000);
+        }
+
+        // Show message
+        function showMessage(text, type = '') {
+            const messageEl = document.getElementById('gameMessage');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('levelValue').textContent = gameState.currentLevel;
+            document.getElementById('scoreValue').textContent = gameState.score;
+            document.getElementById('streakValue').textContent = gameState.streak;
+            
+            const phase = document.getElementById('gamePhase');
+            const startBtn = document.getElementById('startRound');
+            const retryBtn = document.getElementById('retryLevel');
+            
+            switch (gameState.phase) {
+                case 'waiting':
+                    phase.textContent = 'Ready to start!';
+                    startBtn.style.display = 'inline-block';
+                    retryBtn.style.display = 'none';
+                    break;
+                case 'playing':
+                    phase.textContent = 'Listen carefully...';
+                    startBtn.style.display = 'none';
+                    retryBtn.style.display = 'none';
+                    break;
+                case 'listening':
+                    phase.textContent = 'Your turn! Play the sequence';
+                    startBtn.style.display = 'none';
+                    retryBtn.style.display = 'none';
+                    break;
+                case 'success':
+                    phase.textContent = 'Excellent!';
+                    startBtn.style.display = 'none';
+                    retryBtn.style.display = 'none';
+                    break;
+                case 'failure':
+                    phase.textContent = 'Try again';
+                    startBtn.style.display = 'none';
+                    retryBtn.style.display = 'none';
+                    break;
+            }
+            
+            // Update progress bar based on sequence progress
+            const progress = gameState.phase === 'listening' 
+                ? (gameState.sequenceIndex / gameState.sequence.length) * 100
+                : gameState.phase === 'success' ? 100 : 0;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        // Start new round
+        function startNewRound() {
+            gameState.sequence = generateSequence(gameState.currentLevel);
+            gameState.phase = 'waiting';
+            updateUI();
+            showMessage('Listen carefully to the sequence', '');
+        }
+
+        // Load saved progress
+        function loadProgress() {
+            const saved = localStorage.getItem('noteMasterProgress');
+            if (saved) {
+                const data = JSON.parse(saved);
+                gameState.highScore = data.highScore || 0;
+                gameState.currentLevel = data.currentLevel || 1;
+            }
+        }
+
+        // Save progress
+        function saveProgress() {
+            const data = {
+                highScore: Math.max(gameState.score, gameState.highScore),
+                currentLevel: gameState.currentLevel
+            };
+            localStorage.setItem('noteMasterProgress', JSON.stringify(data));
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.dataset.theme || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.dataset.theme = newTheme;
+            
+            const themeToggle = document.getElementById('themeToggle');
+            themeToggle.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+            
+            localStorage.setItem('noteMasterTheme', newTheme);
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('noteMasterTheme') || 'dark';
+            document.body.dataset.theme = savedTheme;
+            document.getElementById('themeToggle').textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            loadProgress();
+            
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            
+            // Main menu button
+            document.getElementById('playButton').addEventListener('click', function() {
+                initAudio();
+                document.getElementById('welcomeScreen').style.display = 'none';
+                document.getElementById('gameUI').style.display = 'flex';
+                document.getElementById('gameUI').classList.add('slide-in');
+                startNewRound();
+            });
+            
+            // Start round button
+            document.getElementById('startRound').addEventListener('click', function() {
+                playSequence(gameState.sequence);
+            });
+            
+            // Retry level button
+            document.getElementById('retryLevel').addEventListener('click', function() {
+                gameState.phase = 'waiting';
+                gameState.sequenceIndex = 0;
+                gameState.userInput = [];
+                updateUI();
+                showMessage('Listen carefully to the sequence', '');
+            });
+            
+            // Back to menu button
+            document.getElementById('backToMenu').addEventListener('click', function() {
+                document.getElementById('gameUI').style.display = 'none';
+                document.getElementById('welcomeScreen').style.display = 'flex';
+                document.getElementById('welcomeScreen').classList.add('fade-in');
+                
+                // Reset game state but keep progress
+                const savedLevel = gameState.currentLevel;
+                const savedScore = gameState.score;
+                gameState = {
+                    currentLevel: savedLevel,
+                    score: savedScore,
+                    streak: 0,
+                    phase: 'waiting',
+                    sequence: [],
+                    userInput: [],
+                    sequenceIndex: 0,
+                    lastInputTime: 0,
+                    tolerance: 200,
+                    bpm: 100
+                };
+            });
+            
+            // Piano key event listeners
+            const keys = document.querySelectorAll('.key');
+            keys.forEach(key => {
+                const handlePress = () => {
+                    if (!audioContext) initAudio();
+                    
+                    key.classList.add('pressed');
+                    setTimeout(() => key.classList.remove('pressed'), 100);
+                    
+                    handleKeyPress(key.dataset.note);
+                };
+                
+                // Touch events for mobile
+                key.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handlePress();
+                });
+                
+                // Mouse events for desktop
+                key.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    handlePress();
+                });
+            });
+            
+            // Prevent default touch behaviors
+            document.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('key')) {
+                    e.preventDefault();
+                }
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+            });
+        });
+
+        // Keyboard support for desktop
+        document.addEventListener('keydown', function(e) {
+            const keyMap = {
+                'a': 'C4', 's': 'D4', 'd': 'E4', 'f': 'F4', 
+                'g': 'G4', 'h': 'A4', 'j': 'B4', 'k': 'C5',
+                'w': 'C#4', 'e': 'D#4', 't': 'F#4', 'y': 'G#4', 'u': 'A#4'
+            };
+            
+            const note = keyMap[e.key.toLowerCase()];
+            if (note) {
+                e.preventDefault();
+                if (!audioContext) initAudio();
+                
+                const key = document.querySelector(`[data-note="${note}"]`);
+                if (key && !key.classList.contains('pressed')) {
+                    key.classList.add('pressed');
+                    handleKeyPress(note);
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', function(e) {
+            const keyMap = {
+                'a': 'C4', 's': 'D4', 'd': 'E4', 'f': 'F4', 
+                'g': 'G4', 'h': 'A4', 'j': 'B4', 'k': 'C5',
+                'w': 'C#4', 'e': 'D#4', 't': 'F#4', 'y': 'G#4', 'u': 'A#4'
+            };
+            
+            const note = keyMap[e.key.toLowerCase()];
+            if (note) {
+                const key = document.querySelector(`[data-note="${note}"]`);
+                if (key) {
+                    key.classList.remove('pressed');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
