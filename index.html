@@ -506,29 +506,29 @@
                 <div class="piano-container">
                     <div class="piano" id="piano">
                         <!-- White keys -->
-                        <div class="key white" data-note="C4" data-freq="261.63">C</div>
-                        <div class="key white" data-note="D4" data-freq="293.66">D</div>
-                        <div class="key white" data-note="E4" data-freq="329.63">E</div>
-                        <div class="key white" data-note="F4" data-freq="349.23">F</div>
-                        <div class="key white" data-note="G4" data-freq="392.00">G</div>
-                        <div class="key white" data-note="A4" data-freq="440.00">A</div>
-                        <div class="key white" data-note="B4" data-freq="493.88">B</div>
-                        <div class="key white" data-note="C5" data-freq="523.25">C</div>
+                        <div class="key white" data-note="C4" data-freq="261.63"></div>
+                        <div class="key white" data-note="D4" data-freq="293.66"></div>
+                        <div class="key white" data-note="E4" data-freq="329.63"></div>
+                        <div class="key white" data-note="F4" data-freq="349.23"></div>
+                        <div class="key white" data-note="G4" data-freq="392.00"></div>
+                        <div class="key white" data-note="A4" data-freq="440.00"></div>
+                        <div class="key white" data-note="B4" data-freq="493.88"></div>
+                        <div class="key white" data-note="C5" data-freq="523.25"></div>
                         
                         <!-- Black keys -->
-                        <div class="key black" data-note="C#4" data-freq="277.18">C#</div>
-                        <div class="key black" data-note="D#4" data-freq="311.13">D#</div>
-                        <div class="key black" data-note="F#4" data-freq="369.99">F#</div>
-                        <div class="key black" data-note="G#4" data-freq="415.30">G#</div>
-                        <div class="key black" data-note="A#4" data-freq="466.16">A#</div>
+                        <div class="key black" data-note="C#4" data-freq="277.18"></div>
+                        <div class="key black" data-note="D#4" data-freq="311.13"></div>
+                        <div class="key black" data-note="F#4" data-freq="369.99"></div>
+                        <div class="key black" data-note="G#4" data-freq="415.30"></div>
+                        <div class="key black" data-note="A#4" data-freq="466.16"></div>
                     </div>
                 </div>
             </div>
 
             <div class="controls">
-                <button class="btn" id="startRound">Listen to Sequence</button>
-                <button class="btn secondary" id="retryLevel" style="display: none;">Retry Level</button>
-                <button class="btn secondary" id="backToMenu">Main Menu</button>
+                <button class="btn" id="startRound">Start Game</button>
+                <button class="btn" id="nextLevel" style="display: none;">Next</button>
+                <button class="btn secondary" id="retryLevel" style="display: none;">Retry</button>
             </div>
         </div>
     </div>
@@ -756,7 +756,7 @@
             return sequence;
         }
 
-        // Play sequence with timing
+        // Play sequence with timing (NO visual highlights — audio only)
         async function playSequence(sequence) {
             gameState.phase = 'playing';
             updateUI();
@@ -766,22 +766,13 @@
             for (let i = 0; i < sequence.length; i++) {
                 const item = sequence[i];
                 
-                // Play metronome click
-                playMetronome();
-                
-                // Highlight key
+                // Play note (audio only, no key highlights)
                 const key = document.querySelector(`[data-note="${item.note}"]`);
-                key.classList.add('playing');
-                
-                // Play note
                 const frequency = parseFloat(key.dataset.freq);
                 playNote(frequency, item.duration / 1000);
                 
                 // Wait for the note duration
                 await new Promise(resolve => setTimeout(resolve, item.duration));
-                
-                // Remove highlight
-                key.classList.remove('playing');
                 
                 // Small gap between notes
                 if (i < sequence.length - 1) {
@@ -789,11 +780,21 @@
                 }
             }
             
+            // Countdown: play one measure of beats before player's turn
+            showMessage('Get ready...', '');
+            await new Promise(resolve => setTimeout(resolve, 400));
+            for (let beat = 0; beat < 4; beat++) {
+                playMetronome();
+                showMessage(`${4 - beat}`, '');
+                await new Promise(resolve => setTimeout(resolve, beatInterval));
+            }
+            
             // Start listening phase
             gameState.phase = 'listening';
             gameState.sequenceIndex = 0;
             gameState.userInput = [];
             gameState.lastInputTime = Date.now();
+            showMessage('Your turn!', '');
             updateUI();
         }
 
@@ -881,15 +882,8 @@
             updateUI();
             showMessage(`Perfect! +${totalScore} points`, 'success');
             
-            // Advance to next level after delay
-            setTimeout(() => {
-                gameState.currentLevel++;
-                showLevelAnnouncement(gameState.currentLevel);
-                
-                setTimeout(() => {
-                    startNewRound();
-                }, 2000);
-            }, 1500);
+            // Show Next button
+            document.getElementById('nextLevel').style.display = 'inline-block';
         }
 
         // Handle failed sequence
@@ -970,22 +964,26 @@
             const phase = document.getElementById('gamePhase');
             const startBtn = document.getElementById('startRound');
             const retryBtn = document.getElementById('retryLevel');
+            const nextBtn = document.getElementById('nextLevel');
             
             switch (gameState.phase) {
                 case 'waiting':
                     phase.textContent = 'Ready to start!';
                     startBtn.style.display = 'inline-block';
                     retryBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
                     break;
                 case 'playing':
                     phase.textContent = 'Listen carefully...';
                     startBtn.style.display = 'none';
                     retryBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
                     break;
                 case 'listening':
-                    phase.textContent = 'Your turn! Play the sequence';
+                    phase.textContent = 'Your turn!';
                     startBtn.style.display = 'none';
                     retryBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
                     break;
                 case 'success':
                     phase.textContent = 'Excellent!';
@@ -995,7 +993,7 @@
                 case 'failure':
                     phase.textContent = 'Try again';
                     startBtn.style.display = 'none';
-                    retryBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
                     break;
             }
             
@@ -1062,50 +1060,44 @@
             // Theme toggle
             document.getElementById('themeToggle').addEventListener('click', toggleTheme);
             
-            // Main menu button
+            // Start Playing → go straight into game and play sequence
             document.getElementById('playButton').addEventListener('click', function() {
                 initAudio();
                 document.getElementById('welcomeScreen').style.display = 'none';
                 document.getElementById('gameUI').style.display = 'flex';
                 document.getElementById('gameUI').classList.add('slide-in');
-                startNewRound();
+                gameState.sequence = generateSequence(gameState.currentLevel);
+                gameState.phase = 'playing';
+                updateUI();
+                showMessage('Listen carefully...', '');
+                setTimeout(() => playSequence(gameState.sequence), 500);
             });
             
-            // Start round button
+            // Start round button (for subsequent rounds)
             document.getElementById('startRound').addEventListener('click', function() {
                 playSequence(gameState.sequence);
             });
             
+            // Next level button
+            document.getElementById('nextLevel').addEventListener('click', function() {
+                gameState.currentLevel++;
+                showLevelAnnouncement(gameState.currentLevel);
+                document.getElementById('nextLevel').style.display = 'none';
+                setTimeout(() => {
+                    startNewRound();
+                    setTimeout(() => playSequence(gameState.sequence), 500);
+                }, 1500);
+            });
+            
             // Retry level button
             document.getElementById('retryLevel').addEventListener('click', function() {
-                gameState.phase = 'waiting';
+                document.getElementById('retryLevel').style.display = 'none';
+                gameState.phase = 'playing';
                 gameState.sequenceIndex = 0;
                 gameState.userInput = [];
                 updateUI();
-                showMessage('Listen carefully to the sequence', '');
-            });
-            
-            // Back to menu button
-            document.getElementById('backToMenu').addEventListener('click', function() {
-                document.getElementById('gameUI').style.display = 'none';
-                document.getElementById('welcomeScreen').style.display = 'flex';
-                document.getElementById('welcomeScreen').classList.add('fade-in');
-                
-                // Reset game state but keep progress
-                const savedLevel = gameState.currentLevel;
-                const savedScore = gameState.score;
-                gameState = {
-                    currentLevel: savedLevel,
-                    score: savedScore,
-                    streak: 0,
-                    phase: 'waiting',
-                    sequence: [],
-                    userInput: [],
-                    sequenceIndex: 0,
-                    lastInputTime: 0,
-                    tolerance: 200,
-                    bpm: 100
-                };
+                showMessage('Listen carefully...', '');
+                setTimeout(() => playSequence(gameState.sequence), 500);
             });
             
             // Piano key event listeners
