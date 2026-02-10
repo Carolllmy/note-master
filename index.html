@@ -250,8 +250,8 @@
         }
 
         .key.white {
-            width: 60px;
-            height: 200px;
+            width: 12.5vw;
+            height: 45vh;
             background: var(--white-key);
             border: 1px solid var(--border);
             box-shadow: 0 2px 8px var(--key-shadow);
@@ -260,8 +260,8 @@
         }
 
         .key.black {
-            width: 36px;
-            height: 120px;
+            width: 8vw;
+            height: 28vh;
             background: var(--black-key);
             border: 1px solid #000;
             box-shadow: 0 2px 8px var(--shadow);
@@ -270,12 +270,12 @@
             color: #bbb;
         }
 
-        /* Black key positioning */
-        .key.black[data-note="C#4"] { left: 42px; }
-        .key.black[data-note="D#4"] { left: 102px; }
-        .key.black[data-note="F#4"] { left: 222px; }
-        .key.black[data-note="G#4"] { left: 282px; }
-        .key.black[data-note="A#4"] { left: 342px; }
+        /* Black key positioning — percentage based */
+        .key.black[data-note="C#4"] { left: calc(12.5vw * 1 - 4vw); }
+        .key.black[data-note="D#4"] { left: calc(12.5vw * 2 - 4vw); }
+        .key.black[data-note="F#4"] { left: calc(12.5vw * 4 - 4vw); }
+        .key.black[data-note="G#4"] { left: calc(12.5vw * 5 - 4vw); }
+        .key.black[data-note="A#4"] { left: calc(12.5vw * 6 - 4vw); }
 
         .key:active, .key.pressed {
             transform: translateY(2px);
@@ -343,43 +343,11 @@
             color: var(--text-primary);
         }
 
-        /* Mobile responsiveness */
         @media (max-width: 768px) {
-            .header {
-                padding: 1rem;
-            }
-
-            .piano {
-                transform: scale(0.85);
-            }
-
-            .key.white {
-                width: 50px;
-                height: 180px;
-            }
-
-            .key.black {
-                width: 30px;
-                height: 110px;
-            }
-
-            .key.black[data-note="C#4"] { left: 35px; }
-            .key.black[data-note="D#4"] { left: 85px; }
-            .key.black[data-note="F#4"] { left: 185px; }
-            .key.black[data-note="G#4"] { left: 235px; }
-            .key.black[data-note="A#4"] { left: 285px; }
-
-            .welcome-title {
-                font-size: 2.5rem;
-            }
-
-            .game-stats {
-                gap: 0.5rem;
-            }
-
-            .stat-value {
-                font-size: 1.2rem;
-            }
+            .header { padding: 0.75rem 1rem; }
+            .game-header { padding: 0.5rem 1rem; }
+            .piano-container { padding: 0; }
+            .stat-value { font-size: 1.1rem; }
         }
 
         /* Animations */
@@ -639,13 +607,13 @@
                 const sustainGain = peakGain * 0.15;
                 
                 gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(peakGain, now + 0.005);           // very fast attack (hammer strike)
-                gain.gain.exponentialRampToValueAtTime(peakGain * 0.4, now + 0.08); // quick initial decay
-                gain.gain.exponentialRampToValueAtTime(sustainGain, now + 0.4);     // slower secondary decay
-                gain.gain.exponentialRampToValueAtTime(0.001, now + duration + 1.2);// long release (string ring)
+                gain.gain.linearRampToValueAtTime(peakGain, now + 0.005);           // fast attack
+                gain.gain.exponentialRampToValueAtTime(peakGain * 0.3, now + 0.06); // quick decay
+                gain.gain.exponentialRampToValueAtTime(sustainGain, now + 0.2);     // short sustain
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration + 0.15);// dry cutoff, no reverb
                 
                 osc.start(now);
-                osc.stop(now + duration + 1.5);
+                osc.stop(now + duration + 0.2);
             });
             
             // Add a subtle "hammer" noise burst for attack realism
