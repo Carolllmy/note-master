@@ -72,6 +72,28 @@
             color: var(--accent-bright);
         }
 
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .leaderboard-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .leaderboard-btn:hover {
+            color: var(--accent-bright);
+            transform: scale(1.1);
+        }
+
         .theme-toggle {
             background: var(--accent);
             border: none;
@@ -96,6 +118,292 @@
             display: flex;
             flex-direction: column;
             position: relative;
+        }
+
+        /* Profile Selection Screen */
+        .profile-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .profile-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent-bright);
+        }
+
+        .profile-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .profiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .profile-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .profile-card:hover {
+            border-color: var(--accent-bright);
+            transform: translateY(-2px);
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            overflow: hidden;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-age {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .create-profile-btn {
+            background: var(--accent-bright);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .create-profile-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Create Profile Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .avatar-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            overflow: hidden;
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            background: var(--accent);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .file-input-label:hover {
+            background: var(--accent-bright);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn-secondary {
+            background: none;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent);
+        }
+
+        .btn-primary {
+            background: var(--accent-bright);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        /* Leaderboard Modal */
+        .leaderboard-modal .modal {
+            max-width: 500px;
+        }
+
+        .leaderboard-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .leaderboard-rank {
+            font-weight: 700;
+            font-size: 1.2rem;
+            width: 40px;
+            color: var(--accent-bright);
+        }
+
+        .leaderboard-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 1rem;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .leaderboard-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .leaderboard-info {
+            flex: 1;
+        }
+
+        .leaderboard-name {
+            font-weight: 600;
+        }
+
+        .leaderboard-age {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .leaderboard-score {
+            font-weight: 700;
+            color: var(--success);
         }
 
         .welcome-screen {
@@ -180,8 +488,12 @@
         .game-phase {
             text-align: center;
             font-size: 1.1rem;
-            font-weight: 600;
+            font-weight: 400;
             color: var(--text-secondary);
+            /* Clean text-only style - no background, no border */
+            background: none;
+            border: none;
+            padding: 0;
         }
 
         .game-area {
@@ -347,6 +659,22 @@
             color: var(--text-secondary);
         }
 
+        /* Next button styled as a proper button */
+        #nextLevel {
+            background: var(--accent-bright) !important;
+            color: white !important;
+            border-radius: 12px !important;
+            padding: 1rem 3rem !important;
+            font-size: 1.1rem !important;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        #nextLevel:hover {
+            opacity: 0.9 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
         @media (max-width: 768px) {
             .header { padding: 0.75rem 1rem; }
             .game-header { padding: 0.5rem 1rem; }
@@ -426,12 +754,25 @@
 <body>
     <div class="header">
         <div class="logo">🎹 Note Master</div>
-        <button class="theme-toggle" id="themeToggle">🌙</button>
+        <div class="header-controls">
+            <button class="leaderboard-btn" id="leaderboardBtn" style="display: none;">🏆</button>
+            <button class="theme-toggle" id="themeToggle">🌙</button>
+        </div>
     </div>
 
     <div class="main-content">
+        <!-- Profile Selection Screen -->
+        <div class="profile-screen" id="profileScreen">
+            <h1 class="profile-title">Choose Your Player</h1>
+            <p class="profile-subtitle">Select a profile or create a new one</p>
+            <div class="profiles-grid" id="profilesGrid">
+                <!-- Profiles will be loaded here -->
+            </div>
+            <button class="create-profile-btn" id="createProfileBtn">+ Create New Player</button>
+        </div>
+
         <!-- Welcome Screen -->
-        <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-screen" id="welcomeScreen" style="display: none;">
             <h1 class="welcome-title">Note Master</h1>
             <p class="welcome-subtitle">Master the piano through memory and rhythm</p>
             <button class="play-button" id="playButton">Start Playing</button>
@@ -488,9 +829,51 @@
             </div>
 
             <div class="controls">
-                <button class="btn" id="startRound">Start Game</button>
+                <button class="btn" id="startRound">Start</button>
                 <button class="btn" id="nextLevel" style="display: none;">Next</button>
                 <button class="btn secondary" id="retryLevel" style="display: none;">Retry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Profile Modal -->
+    <div class="modal-overlay" id="createProfileModal">
+        <div class="modal">
+            <h2 class="modal-title">Create New Player</h2>
+            <div class="form-group">
+                <label class="form-label" for="profileName">Name</label>
+                <input type="text" id="profileName" class="form-input" placeholder="Enter your name">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="profileAge">Age</label>
+                <input type="number" id="profileAge" class="form-input" placeholder="Enter your age" min="1" max="120">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Avatar</label>
+                <div class="avatar-upload">
+                    <div class="avatar-preview" id="avatarPreview">👤</div>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="avatarInput" class="file-input" accept="image/*">
+                        <label for="avatarInput" class="file-input-label">Choose Photo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="cancelProfileBtn">Cancel</button>
+                <button class="btn-primary" id="saveProfileBtn">Create Player</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div class="modal-overlay leaderboard-modal" id="leaderboardModal">
+        <div class="modal">
+            <h2 class="modal-title">🏆 Leaderboard</h2>
+            <div class="leaderboard-list" id="leaderboardList">
+                <!-- Leaderboard entries will be loaded here -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="closeLeaderboardBtn">Close</button>
             </div>
         </div>
     </div>
@@ -499,6 +882,9 @@
         // Audio Context and Synthesis
         let audioContext;
         let masterGain;
+
+        // Player profiles
+        let currentPlayer = null;
 
         // Game State
         let gameState = {
@@ -563,10 +949,16 @@
             { keys: ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5'], length: 10, rhythms: ['quarter', 'half', 'eighth'], bpm: 130, patterns: ['scale', 'arpeggio', 'interval', 'chromatic'] }
         ];
 
-        // Initialize audio context
+        // Initialize audio context and pre-decode samples
         function initAudio() {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Resume context if suspended (required after user interaction)
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
                 masterGain = audioContext.createGain();
                 masterGain.connect(audioContext.destination);
                 masterGain.gain.value = 0.8;
@@ -574,7 +966,7 @@
             }
         }
 
-        // Real Steinway piano samples (University of Iowa)
+        // Real Steinway piano samples (University of Iowa) - PRE-DECODED
         let pianoSamples = {};
         let pianoBuffers = {};
         
@@ -582,23 +974,41 @@
             try {
                 const resp = await fetch('piano-samples.json');
                 pianoSamples = await resp.json();
-                // Decode all samples into AudioBuffers
+                
+                // Pre-decode ALL samples into AudioBuffers for instant playback
+                const decodePromises = [];
                 for (const [note, dataUri] of Object.entries(pianoSamples)) {
-                    const b64 = dataUri.split(',')[1];
-                    const binary = atob(b64);
-                    const bytes = new Uint8Array(binary.length);
-                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                    try {
-                        pianoBuffers[note] = await audioContext.decodeAudioData(bytes.buffer.slice(0));
-                    } catch(e) { console.log('Failed to decode', note); }
+                    const promise = (async () => {
+                        try {
+                            const b64 = dataUri.split(',')[1];
+                            const binary = atob(b64);
+                            const bytes = new Uint8Array(binary.length);
+                            for (let i = 0; i < binary.length; i++) {
+                                bytes[i] = binary.charCodeAt(i);
+                            }
+                            pianoBuffers[note] = await audioContext.decodeAudioData(bytes.buffer.slice(0));
+                        } catch(e) { 
+                            console.warn('Failed to decode', note, e); 
+                        }
+                    })();
+                    decodePromises.push(promise);
                 }
-                console.log('Loaded Steinway samples for', Object.keys(pianoBuffers).length, 'notes');
-            } catch(e) { console.log('No piano samples found, using synth fallback'); }
+                
+                await Promise.all(decodePromises);
+                console.log('Pre-decoded Steinway samples for', Object.keys(pianoBuffers).length, 'notes');
+            } catch(e) { 
+                console.log('No piano samples found, using synth fallback'); 
+            }
         }
         
-        // Play a real piano sample or synth fallback
+        // Play a note with ZERO delay using pre-decoded buffers
         function playNote(frequency, duration = 0.5, velocity = 0.7) {
             if (!audioContext) return;
+            
+            // Ensure audio context is running
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
             
             // Find the note name from frequency
             const noteForFreq = document.querySelector(`[data-freq="${frequency}"]`) ||
@@ -606,18 +1016,18 @@
             const noteName = noteForFreq ? noteForFreq.dataset.note : null;
             
             if (noteName && pianoBuffers[noteName]) {
-                // Play real sample
+                // Play pre-decoded sample INSTANTLY
                 const source = audioContext.createBufferSource();
                 source.buffer = pianoBuffers[noteName];
                 const gain = audioContext.createGain();
                 gain.gain.value = velocity;
                 source.connect(gain);
                 gain.connect(masterGain);
-                source.start();
+                source.start(0); // Start immediately
                 return;
             }
             
-            // Synth fallback
+            // Synth fallback (also instant)
             const now = audioContext.currentTime;
             const osc = audioContext.createOscillator();
             const gain = audioContext.createGain();
@@ -651,6 +1061,135 @@
             
             oscillator.start(now);
             oscillator.stop(now + 0.05);
+        }
+
+        // Profile Management
+        function loadProfiles() {
+            const profiles = JSON.parse(localStorage.getItem('noteMasterProfiles') || '[]');
+            return profiles;
+        }
+
+        function saveProfiles(profiles) {
+            localStorage.setItem('noteMasterProfiles', JSON.stringify(profiles));
+        }
+
+        function createProfile(name, age, avatar) {
+            const profiles = loadProfiles();
+            const newProfile = {
+                id: Date.now(),
+                name: name,
+                age: age,
+                avatar: avatar,
+                bestScore: 0,
+                totalGames: 0
+            };
+            profiles.push(newProfile);
+            saveProfiles(profiles);
+            return newProfile;
+        }
+
+        function setCurrentPlayer(profileId) {
+            currentPlayer = loadProfiles().find(p => p.id === profileId);
+            localStorage.setItem('noteMasterCurrentPlayer', profileId);
+        }
+
+        function getCurrentPlayer() {
+            const playerId = localStorage.getItem('noteMasterCurrentPlayer');
+            if (playerId) {
+                return loadProfiles().find(p => p.id == playerId);
+            }
+            return null;
+        }
+
+        function updatePlayerScore(profileId, score) {
+            const profiles = loadProfiles();
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) {
+                profile.bestScore = Math.max(profile.bestScore, score);
+                profile.totalGames = (profile.totalGames || 0) + 1;
+                saveProfiles(profiles);
+            }
+        }
+
+        function renderProfiles() {
+            const profiles = loadProfiles();
+            const grid = document.getElementById('profilesGrid');
+            
+            if (profiles.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1 / -1; text-align: center;">No players yet. Create your first profile!</p>';
+                return;
+            }
+            
+            grid.innerHTML = profiles.map(profile => `
+                <div class="profile-card" onclick="selectProfile(${profile.id})">
+                    <div class="profile-avatar">
+                        ${profile.avatar ? `<img src="${profile.avatar}" alt="${profile.name}">` : '👤'}
+                    </div>
+                    <div class="profile-name">${profile.name}</div>
+                    <div class="profile-age">Age ${profile.age}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectProfile(profileId) {
+            setCurrentPlayer(profileId);
+            showScreen('welcomeScreen');
+            document.getElementById('leaderboardBtn').style.display = 'block';
+        }
+
+        function showCreateProfileModal() {
+            document.getElementById('createProfileModal').style.display = 'flex';
+            document.getElementById('profileName').value = '';
+            document.getElementById('profileAge').value = '';
+            document.getElementById('avatarPreview').innerHTML = '👤';
+            document.getElementById('avatarInput').value = '';
+        }
+
+        function hideCreateProfileModal() {
+            document.getElementById('createProfileModal').style.display = 'none';
+        }
+
+        // Leaderboard
+        function showLeaderboard() {
+            const profiles = loadProfiles();
+            const sortedProfiles = profiles
+                .filter(p => p.bestScore > 0)
+                .sort((a, b) => b.bestScore - a.bestScore);
+            
+            const list = document.getElementById('leaderboardList');
+            
+            if (sortedProfiles.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No scores yet. Start playing to see rankings!</p>';
+            } else {
+                list.innerHTML = sortedProfiles.map((profile, index) => `
+                    <div class="leaderboard-item">
+                        <div class="leaderboard-rank">#${index + 1}</div>
+                        <div class="leaderboard-avatar">
+                            ${profile.avatar ? `<img src="${profile.avatar}" alt="${profile.name}">` : '👤'}
+                        </div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-name">${profile.name}</div>
+                            <div class="leaderboard-age">Age ${profile.age}</div>
+                        </div>
+                        <div class="leaderboard-score">${profile.bestScore}</div>
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('leaderboardModal').style.display = 'flex';
+        }
+
+        function hideLeaderboard() {
+            document.getElementById('leaderboardModal').style.display = 'none';
+        }
+
+        // Screen management
+        function showScreen(screenId) {
+            const screens = ['profileScreen', 'welcomeScreen', 'gameUI'];
+            screens.forEach(screen => {
+                const el = document.getElementById(screen);
+                el.style.display = screen === screenId ? (screen === 'gameUI' ? 'flex' : 'flex') : 'none';
+            });
         }
 
         // Generate musically intelligent sequence
@@ -763,18 +1302,18 @@
             updateUI();
         }
 
-        // Handle user key press — just check note order, no timing
+        // Handle user key press — PLAY SOUND FIRST, then check logic
         function handleKeyPress(note) {
             if (gameState.phase !== 'listening') return;
-            
-            const expectedItem = gameState.sequence[gameState.sequenceIndex];
-            if (!expectedItem) return;
             
             const key = document.querySelector(`[data-note="${note}"]`);
             const frequency = parseFloat(key.dataset.freq);
             
-            // Play the note
+            // PLAY SOUND FIRST - eliminate any delay
             playNote(frequency, 0.3);
+            
+            const expectedItem = gameState.sequence[gameState.sequenceIndex];
+            if (!expectedItem) return;
             
             // Check if correct note
             const isCorrect = note === expectedItem.note;
@@ -806,8 +1345,11 @@
             
             gameState.score += totalScore;
             
-            // Save progress
+            // Save progress and update player profile
             saveProgress();
+            if (currentPlayer) {
+                updatePlayerScore(currentPlayer.id, gameState.score);
+            }
             
             updateUI();
             showMessage(`Perfect! +${totalScore} points`, 'success');
@@ -820,6 +1362,11 @@
         function handleSequenceFailure() {
             gameState.phase = 'failure';
             gameState.streak = 0;
+            
+            // Save progress on failure too
+            if (currentPlayer) {
+                updatePlayerScore(currentPlayer.id, gameState.score);
+            }
             
             updateUI();
             showMessage('Not quite right. Try again!', 'error');
@@ -888,7 +1435,7 @@
                     nextBtn.style.display = 'none';
                     break;
                 case 'playing':
-                    phase.textContent = '';
+                    phase.textContent = 'Listen carefully...';
                     startBtn.style.display = 'none';
                     retryBtn.style.display = 'none';
                     nextBtn.style.display = 'none';
@@ -923,7 +1470,6 @@
             gameState.sequence = generateSequence(gameState.currentLevel);
             gameState.phase = 'waiting';
             updateUI();
-            
         }
 
         // Load saved progress (only high score persists, always start level 1)
@@ -973,14 +1519,62 @@
             loadTheme();
             loadProgress();
             
+            // Check for existing player
+            currentPlayer = getCurrentPlayer();
+            if (currentPlayer) {
+                showScreen('welcomeScreen');
+                document.getElementById('leaderboardBtn').style.display = 'block';
+            } else {
+                showScreen('profileScreen');
+                renderProfiles();
+            }
+            
             // Theme toggle
             document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            
+            // Profile management
+            document.getElementById('createProfileBtn').addEventListener('click', showCreateProfileModal);
+            document.getElementById('cancelProfileBtn').addEventListener('click', hideCreateProfileModal);
+            document.getElementById('saveProfileBtn').addEventListener('click', function() {
+                const name = document.getElementById('profileName').value.trim();
+                const age = parseInt(document.getElementById('profileAge').value);
+                const avatarPreview = document.getElementById('avatarPreview');
+                const avatar = avatarPreview.querySelector('img')?.src || null;
+                
+                if (!name || !age) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+                
+                const newProfile = createProfile(name, age, avatar);
+                setCurrentPlayer(newProfile.id);
+                hideCreateProfileModal();
+                showScreen('welcomeScreen');
+                document.getElementById('leaderboardBtn').style.display = 'block';
+                renderProfiles();
+            });
+            
+            // Avatar upload
+            document.getElementById('avatarInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.getElementById('avatarPreview');
+                        preview.innerHTML = `<img src="${e.target.result}" alt="Avatar">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Leaderboard
+            document.getElementById('leaderboardBtn').addEventListener('click', showLeaderboard);
+            document.getElementById('closeLeaderboardBtn').addEventListener('click', hideLeaderboard);
             
             // Start Playing → go straight into game and play sequence
             document.getElementById('playButton').addEventListener('click', function() {
                 initAudio();
-                document.getElementById('welcomeScreen').style.display = 'none';
-                document.getElementById('gameUI').style.display = 'flex';
+                showScreen('gameUI');
                 document.getElementById('gameUI').classList.add('slide-in');
                 gameState.sequence = generateSequence(gameState.currentLevel);
                 gameState.phase = 'playing';
@@ -1016,19 +1610,22 @@
                 setTimeout(() => playSequence(gameState.sequence), 500);
             });
             
-            // Piano key event listeners
+            // Piano key event listeners - NO DELAYS, INSTANT RESPONSE
             const keys = document.querySelectorAll('.key');
             keys.forEach(key => {
                 const handlePress = () => {
+                    // Initialize audio on first interaction
                     if (!audioContext) initAudio();
                     
+                    // Visual feedback
                     key.classList.add('pressed');
                     setTimeout(() => key.classList.remove('pressed'), 100);
                     
+                    // Handle key press immediately
                     handleKeyPress(key.dataset.note);
                 };
                 
-                // Touch events for mobile
+                // Touch events for mobile - prevent delays
                 key.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     handlePress();
@@ -1041,15 +1638,24 @@
                 });
             });
             
-            // Prevent default touch behaviors
+            // Prevent default touch behaviors to eliminate delays
             document.addEventListener('touchstart', (e) => {
                 if (e.target.classList.contains('key')) {
                     e.preventDefault();
                 }
-            });
+            }, { passive: false });
             
             document.addEventListener('touchmove', (e) => {
                 e.preventDefault();
+            }, { passive: false });
+            
+            // Close modals on overlay click
+            document.getElementById('createProfileModal').addEventListener('click', function(e) {
+                if (e.target === this) hideCreateProfileModal();
+            });
+            
+            document.getElementById('leaderboardModal').addEventListener('click', function(e) {
+                if (e.target === this) hideLeaderboard();
             });
         });
 
@@ -1089,6 +1695,9 @@
                 }
             }
         });
+
+        // Global functions for onclick handlers
+        window.selectProfile = selectProfile;
     </script>
 </body>
 </html>
