@@ -230,10 +230,13 @@
         .modal {
             background: var(--bg-primary);
             border-radius: 16px;
-            padding: 2rem;
-            width: 90%;
+            padding: 1.5rem;
+            width: calc(100% - 2rem);
             max-width: 400px;
             border: 1px solid var(--border);
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: 1rem;
         }
 
         .modal-title {
@@ -845,10 +848,6 @@
                 <input type="text" id="profileName" class="form-input" placeholder="Enter your name">
             </div>
             <div class="form-group">
-                <label class="form-label" for="profileAge">Age</label>
-                <input type="number" id="profileAge" class="form-input" placeholder="Enter your age" min="1" max="120">
-            </div>
-            <div class="form-group">
                 <label class="form-label">Avatar</label>
                 <div class="avatar-upload">
                     <div class="avatar-preview" id="avatarPreview">👤</div>
@@ -1126,7 +1125,6 @@
                         ${profile.avatar ? `<img src="${profile.avatar}" alt="${profile.name}">` : '👤'}
                     </div>
                     <div class="profile-name">${profile.name}</div>
-                    <div class="profile-age">Age ${profile.age}</div>
                 </div>
             `).join('');
         }
@@ -1140,7 +1138,6 @@
         function showCreateProfileModal() {
             document.getElementById('createProfileModal').style.display = 'flex';
             document.getElementById('profileName').value = '';
-            document.getElementById('profileAge').value = '';
             document.getElementById('avatarPreview').innerHTML = '👤';
             document.getElementById('avatarInput').value = '';
         }
@@ -1169,7 +1166,6 @@
                         </div>
                         <div class="leaderboard-info">
                             <div class="leaderboard-name">${profile.name}</div>
-                            <div class="leaderboard-age">Age ${profile.age}</div>
                         </div>
                         <div class="leaderboard-score">${profile.bestScore}</div>
                     </div>
@@ -1303,15 +1299,25 @@
         }
 
         // Handle user key press — PLAY SOUND FIRST, then check logic
+        // Play note directly by name — no frequency lookup, instant
+        function playNoteByName(noteName) {
+            if (!audioContext) return;
+            if (audioContext.state === 'suspended') audioContext.resume();
+            if (pianoBuffers[noteName]) {
+                const source = audioContext.createBufferSource();
+                source.buffer = pianoBuffers[noteName];
+                const gain = audioContext.createGain();
+                gain.gain.value = 0.7;
+                source.connect(gain);
+                gain.connect(masterGain);
+                source.start(0);
+            }
+        }
+        
         function handleKeyPress(note) {
             if (gameState.phase !== 'listening') return;
             
             const key = document.querySelector(`[data-note="${note}"]`);
-            const frequency = parseFloat(key.dataset.freq);
-            
-            // PLAY SOUND FIRST - eliminate any delay
-            playNote(frequency, 0.3);
-            
             const expectedItem = gameState.sequence[gameState.sequenceIndex];
             if (!expectedItem) return;
             
@@ -1537,16 +1543,15 @@
             document.getElementById('cancelProfileBtn').addEventListener('click', hideCreateProfileModal);
             document.getElementById('saveProfileBtn').addEventListener('click', function() {
                 const name = document.getElementById('profileName').value.trim();
-                const age = parseInt(document.getElementById('profileAge').value);
                 const avatarPreview = document.getElementById('avatarPreview');
                 const avatar = avatarPreview.querySelector('img')?.src || null;
                 
-                if (!name || !age) {
-                    alert('Please fill in all fields');
+                if (!name) {
+                    alert('Please enter a name');
                     return;
                 }
                 
-                const newProfile = createProfile(name, age, avatar);
+                const newProfile = createProfile(name, null, avatar);
                 setCurrentPlayer(newProfile.id);
                 hideCreateProfileModal();
                 showScreen('welcomeScreen');
@@ -1614,14 +1619,17 @@
             const keys = document.querySelectorAll('.key');
             keys.forEach(key => {
                 const handlePress = () => {
-                    // Initialize audio on first interaction
                     if (!audioContext) initAudio();
+                    if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+                    
+                    // ALWAYS play sound immediately
+                    playNoteByName(key.dataset.note);
                     
                     // Visual feedback
                     key.classList.add('pressed');
                     setTimeout(() => key.classList.remove('pressed'), 100);
                     
-                    // Handle key press immediately
+                    // Game logic only during listening phase
                     handleKeyPress(key.dataset.note);
                 };
                 
