@@ -508,11 +508,20 @@
 
         .game-messages {
             text-align: center;
-            margin-bottom: 2rem;
-            min-height: 60px;
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 45vh;
+            z-index: 10;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            pointer-events: none;
+        }
+        
+        .game-messages button {
+            pointer-events: auto;
         }
 
         .message {
@@ -802,7 +811,7 @@
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
-                <div class="game-phase" id="gamePhase">Get Ready!</div>
+                <div class="game-phase" id="gamePhase" style="display:none"></div>
             </div>
 
             <div class="game-area">
@@ -846,14 +855,10 @@
                 <input type="text" id="profileName" class="form-input" placeholder="Enter your name">
             </div>
             <div class="form-group">
-                <label class="form-label">Avatar</label>
-                <div class="avatar-upload">
-                    <div class="avatar-preview" id="avatarPreview">👤</div>
-                    <div class="file-input-wrapper">
-                        <input type="file" id="avatarInput" class="file-input" accept="image/*">
-                        <label for="avatarInput" class="file-input-label">Choose Photo</label>
-                    </div>
+                <label class="form-label">Pick Your Avatar</label>
+                <div id="avatarGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-top:0.5rem">
                 </div>
+                <input type="hidden" id="selectedAvatar" value="">
             </div>
             <div class="modal-actions">
                 <button class="btn-secondary" id="cancelProfileBtn">Cancel</button>
@@ -886,7 +891,7 @@
             </div>
             <div style="font-size:0.95rem;font-weight:600;margin-bottom:1rem;color:var(--text-primary)">Save score to:</div>
             <div id="scorePlayerList" style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.5rem"></div>
-            <button class="btn-secondary" onclick="hideGameOver();resetGame();showScreen('welcomeScreen');">Skip</button>
+            <button class="btn-secondary" onclick="hideGameOver();resetGame();currentPlayer=null;showScreen('profileScreen');renderProfiles();">Skip</button>
         </div>
     </div>
 
@@ -1136,7 +1141,7 @@
             grid.innerHTML = profiles.map(profile => `
                 <div class="profile-card" onclick="selectProfile(${profile.id})">
                     <div class="profile-avatar">
-                        ${profile.avatar ? `<img src="${profile.avatar}" alt="${profile.name}">` : '👤'}
+                        ${profile.avatar ? (getAvatarSvg(profile.avatar) || '👤') : '👤'}
                     </div>
                     <div class="profile-name">${profile.name}</div>
                 </div>
@@ -1149,13 +1154,46 @@
             document.getElementById('leaderboardBtn').style.display = 'block';
         }
 
+        const AVATAR_OPTIONS = [
+            { id: 'cat', svg: `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="#FFE0EC"/><path d="M20 25 L28 8 L36 25" fill="#FFB5D0"/><path d="M44 25 L52 8 L60 25" fill="#FFB5D0"/><circle cx="40" cy="42" r="22" fill="#FFB5D0"/><circle cx="33" cy="38" r="4" fill="#2D2D2D"/><circle cx="47" cy="38" r="4" fill="#2D2D2D"/><circle cx="34" cy="37" r="1.5" fill="white"/><circle cx="48" cy="37" r="1.5" fill="white"/><ellipse cx="40" cy="46" rx="3" ry="2" fill="#FF8FAB"/><path d="M37 48 Q40 52 43 48" fill="none" stroke="#2D2D2D" stroke-width="1.5"/><line x1="20" y1="42" x2="30" y2="44" stroke="#2D2D2D" stroke-width="1"/><line x1="20" y1="46" x2="30" y2="46" stroke="#2D2D2D" stroke-width="1"/><line x1="50" y1="44" x2="60" y2="42" stroke="#2D2D2D" stroke-width="1"/><line x1="50" y1="46" x2="60" y2="46" stroke="#2D2D2D" stroke-width="1"/></svg>` },
+            { id: 'dog', svg: `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="#FFF3E0"/><path d="M18 30 Q14 12 26 22 L30 30Z" fill="#D4A574"/><path d="M62 30 Q66 12 54 22 L50 30Z" fill="#D4A574"/><circle cx="40" cy="42" r="22" fill="#E8C9A0"/><circle cx="33" cy="38" r="4" fill="#2D2D2D"/><circle cx="47" cy="38" r="4" fill="#2D2D2D"/><circle cx="34" cy="37" r="1.5" fill="white"/><circle cx="48" cy="37" r="1.5" fill="white"/><ellipse cx="40" cy="47" rx="5" ry="4" fill="#D4A574"/><ellipse cx="40" cy="46" rx="3" ry="2" fill="#2D2D2D"/><path d="M37 50 Q40 53 43 50" fill="none" stroke="#2D2D2D" stroke-width="1.5"/></svg>` },
+            { id: 'bunny', svg: `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="#F3E5F5"/><ellipse cx="32" cy="16" rx="6" ry="18" fill="#E1BEE7"/><ellipse cx="32" cy="16" rx="3" ry="14" fill="#F8BBD0"/><ellipse cx="48" cy="16" rx="6" ry="18" fill="#E1BEE7"/><ellipse cx="48" cy="16" rx="3" ry="14" fill="#F8BBD0"/><circle cx="40" cy="46" r="22" fill="#E1BEE7"/><circle cx="33" cy="42" r="3.5" fill="#2D2D2D"/><circle cx="47" cy="42" r="3.5" fill="#2D2D2D"/><circle cx="34" cy="41" r="1.5" fill="white"/><circle cx="48" cy="41" r="1.5" fill="white"/><ellipse cx="40" cy="50" rx="2.5" ry="2" fill="#FF8FAB"/><path d="M37 52 Q40 55 43 52" fill="none" stroke="#2D2D2D" stroke-width="1.5"/><circle cx="28" cy="48" r="4" fill="#FFCDD2" opacity="0.5"/><circle cx="52" cy="48" r="4" fill="#FFCDD2" opacity="0.5"/></svg>` },
+            { id: 'bear', svg: `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="#EFEBE9"/><circle cx="24" cy="22" r="10" fill="#A1887F"/><circle cx="24" cy="22" r="6" fill="#BCAAA4"/><circle cx="56" cy="22" r="10" fill="#A1887F"/><circle cx="56" cy="22" r="6" fill="#BCAAA4"/><circle cx="40" cy="44" r="22" fill="#A1887F"/><circle cx="33" cy="40" r="3.5" fill="#2D2D2D"/><circle cx="47" cy="40" r="3.5" fill="#2D2D2D"/><circle cx="34" cy="39" r="1.5" fill="white"/><circle cx="48" cy="39" r="1.5" fill="white"/><ellipse cx="40" cy="48" rx="3" ry="2.5" fill="#2D2D2D"/><path d="M37 51 Q40 54 43 51" fill="none" stroke="#2D2D2D" stroke-width="1.5"/></svg>` },
+            { id: 'panda', svg: `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="#E8F5E9"/><circle cx="24" cy="22" r="10" fill="#2D2D2D"/><circle cx="56" cy="22" r="10" fill="#2D2D2D"/><circle cx="40" cy="44" r="22" fill="white"/><ellipse cx="33" cy="39" rx="7" ry="6" fill="#2D2D2D"/><ellipse cx="47" cy="39" rx="7" ry="6" fill="#2D2D2D"/><circle cx="33" cy="39" r="3" fill="white"/><circle cx="47" cy="39" r="3" fill="white"/><circle cx="34" cy="38" r="1.5" fill="#2D2D2D"/><circle cx="48" cy="38" r="1.5" fill="#2D2D2D"/><ellipse cx="40" cy="48" rx="3" ry="2" fill="#2D2D2D"/><path d="M37 50 Q40 53 43 50" fill="none" stroke="#2D2D2D" stroke-width="1.5"/></svg>` },
+            { id: 'fox', svg: `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="#FFF8E1"/><path d="M18 28 L24 6 L34 28Z" fill="#FF8A65"/><path d="M24 14 L30 28 L22 28Z" fill="white"/><path d="M62 28 L56 6 L46 28Z" fill="#FF8A65"/><path d="M56 14 L50 28 L58 28Z" fill="white"/><circle cx="40" cy="44" r="22" fill="#FF8A65"/><path d="M28 50 Q40 62 52 50 Q40 56 28 50Z" fill="white"/><circle cx="33" cy="39" r="3.5" fill="#2D2D2D"/><circle cx="47" cy="39" r="3.5" fill="#2D2D2D"/><circle cx="34" cy="38" r="1.5" fill="white"/><circle cx="48" cy="38" r="1.5" fill="white"/><ellipse cx="40" cy="46" rx="2.5" ry="2" fill="#2D2D2D"/></svg>` },
+            { id: 'penguin', svg: `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="#E3F2FD"/><circle cx="40" cy="44" r="22" fill="#37474F"/><ellipse cx="40" cy="48" rx="14" ry="16" fill="white"/><circle cx="33" cy="38" r="3.5" fill="white"/><circle cx="47" cy="38" r="3.5" fill="white"/><circle cx="33" cy="38" r="2" fill="#2D2D2D"/><circle cx="47" cy="38" r="2" fill="#2D2D2D"/><path d="M37 45 L40 48 L43 45Z" fill="#FFB74D"/><circle cx="34" cy="37" r="1" fill="white"/><circle cx="48" cy="37" r="1" fill="white"/></svg>` },
+            { id: 'owl', svg: `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" rx="40" fill="#EDE7F6"/><path d="M20 30 L26 14 L32 30" fill="#7E57C2"/><path d="M48 30 L54 14 L60 30" fill="#7E57C2"/><circle cx="40" cy="44" r="22" fill="#9575CD"/><circle cx="33" cy="40" r="8" fill="white"/><circle cx="47" cy="40" r="8" fill="white"/><circle cx="33" cy="40" r="4" fill="#2D2D2D"/><circle cx="47" cy="40" r="4" fill="#2D2D2D"/><circle cx="34.5" cy="39" r="1.5" fill="white"/><circle cx="48.5" cy="39" r="1.5" fill="white"/><path d="M38 50 L40 53 L42 50Z" fill="#FFB74D"/></svg>` },
+        ];
+        
         function showCreateProfileModal() {
             document.getElementById('createProfileModal').style.display = 'flex';
             document.getElementById('profileName').value = '';
-            document.getElementById('avatarPreview').innerHTML = '👤';
-            document.getElementById('avatarInput').value = '';
+            document.getElementById('selectedAvatar').value = '';
+            
+            // Render avatar grid
+            const grid = document.getElementById('avatarGrid');
+            grid.innerHTML = AVATAR_OPTIONS.map(a => `
+                <div class="avatar-option" data-avatar-id="${a.id}" onclick="selectAvatar('${a.id}')" 
+                     style="width:60px;height:60px;border-radius:50%;overflow:hidden;cursor:pointer;border:3px solid transparent;margin:0 auto;transition:all 0.2s">
+                    ${a.svg}
+                </div>
+            `).join('');
         }
 
+        function selectAvatar(avatarId) {
+            document.getElementById('selectedAvatar').value = avatarId;
+            document.querySelectorAll('.avatar-option').forEach(el => {
+                el.style.border = el.dataset.avatarId === avatarId 
+                    ? '3px solid var(--accent-bright)' 
+                    : '3px solid transparent';
+            });
+        }
+        
+        function getAvatarSvg(avatarId) {
+            const a = AVATAR_OPTIONS.find(x => x.id === avatarId);
+            return a ? a.svg : null;
+        }
+        
         function hideCreateProfileModal() {
             document.getElementById('createProfileModal').style.display = 'none';
         }
@@ -1176,7 +1214,7 @@
                     <div class="leaderboard-item">
                         <div class="leaderboard-rank">#${index + 1}</div>
                         <div class="leaderboard-avatar">
-                            ${profile.avatar ? `<img src="${profile.avatar}" alt="${profile.name}">` : '👤'}
+                            ${profile.avatar ? (getAvatarSvg(profile.avatar) || '👤') : '👤'}
                         </div>
                         <div class="leaderboard-info">
                             <div class="leaderboard-name">${profile.name}</div>
@@ -1429,7 +1467,7 @@
             playerList.innerHTML = profiles.map(p => `
                 <div class="profile-card ${currentPlayer && currentPlayer.id === p.id ? 'selected' : ''}" onclick="assignScoreToPlayer(${p.id})" style="cursor:pointer">
                     <div class="profile-avatar">
-                        ${p.avatar ? `<img src="${p.avatar}" alt="${p.name}">` : '👤'}
+                        ${p.avatar ? (getAvatarSvg(p.avatar) || '👤') : '👤'}
                     </div>
                     <div class="profile-name">${p.name}</div>
                 </div>
@@ -1445,11 +1483,12 @@
         
         function assignScoreToPlayer(profileId) {
             updatePlayerScore(profileId, gameState.score);
-            setCurrentPlayer(profileId);
             hideGameOver();
-            // Reset and go to welcome
             resetGame();
-            showScreen('welcomeScreen');
+            // Go back to player selection
+            currentPlayer = null;
+            showScreen('profileScreen');
+            renderProfiles();
         }
         
         function createPlayerFromGameOver() {
@@ -1626,8 +1665,7 @@
             document.getElementById('cancelProfileBtn').addEventListener('click', hideCreateProfileModal);
             document.getElementById('saveProfileBtn').addEventListener('click', function() {
                 const name = document.getElementById('profileName').value.trim();
-                const avatarPreview = document.getElementById('avatarPreview');
-                const avatar = avatarPreview.querySelector('img')?.src || null;
+                const avatar = document.getElementById('selectedAvatar').value || null;
                 
                 if (!name) {
                     alert('Please enter a name');
@@ -1651,18 +1689,6 @@
             });
             
             // Avatar upload
-            document.getElementById('avatarInput').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const preview = document.getElementById('avatarPreview');
-                        preview.innerHTML = `<img src="${e.target.result}" alt="Avatar">`;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-            
             // Leaderboard
             document.getElementById('leaderboardBtn').addEventListener('click', showLeaderboard);
             document.getElementById('closeLeaderboardBtn').addEventListener('click', hideLeaderboard);
@@ -1736,6 +1762,9 @@
 
         // Keyboard support for desktop
         document.addEventListener('keydown', function(e) {
+            // Don't intercept keys when typing in an input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
             const keyMap = {
                 'a': 'C4', 's': 'D4', 'd': 'E4', 'f': 'F4', 
                 'g': 'G4', 'h': 'A4', 'j': 'B4', 'k': 'C5',
