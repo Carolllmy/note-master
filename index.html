@@ -1612,15 +1612,11 @@
             loadTheme();
             loadProgress();
             
-            // Check for existing player
-            currentPlayer = getCurrentPlayer();
-            if (currentPlayer) {
-                showScreen('welcomeScreen');
-                document.getElementById('leaderboardBtn').style.display = 'block';
-            } else {
-                showScreen('profileScreen');
-                renderProfiles();
-            }
+            // Always show profile selection first
+            currentPlayer = null;
+            showScreen('profileScreen');
+            renderProfiles();
+            document.getElementById('leaderboardBtn').style.display = 'block';
             
             // Theme toggle
             document.getElementById('themeToggle').addEventListener('click', toggleTheme);
