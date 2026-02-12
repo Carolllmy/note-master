@@ -832,11 +832,7 @@
                 </div>
             </div>
 
-            <div class="controls">
-                <button class="btn" id="startRound">Start</button>
-                <button class="btn" id="nextLevel" style="display: none;">Next</button>
-                <button class="btn secondary" id="retryLevel" style="display: none;">Retry</button>
-            </div>
+            <div class="controls" id="controlsArea" style="display:none"></div>
         </div>
     </div>
 
@@ -1292,9 +1288,7 @@
                 const item = sequence[i];
                 
                 // Play note (audio only, no key highlights)
-                const key = document.querySelector(`[data-note="${item.note}"]`);
-                const frequency = parseFloat(key.dataset.freq);
-                playNote(frequency, item.duration / 1000);
+                playNoteByName(item.note);
                 
                 // Wait for the note duration
                 await new Promise(resolve => setTimeout(resolve, item.duration));
@@ -1377,8 +1371,15 @@
             updateUI();
             showMessage(`Perfect! +${totalScore} points`, 'success');
             
-            // Show Next button
-            document.getElementById('nextLevel').style.display = 'inline-block';
+            // Auto-advance to next level
+            setTimeout(() => {
+                gameState.currentLevel++;
+                showLevelAnnouncement(gameState.currentLevel);
+                setTimeout(() => {
+                    startNewRound();
+                    setTimeout(() => playSequence(gameState.sequence), 500);
+                }, 1500);
+            }, 1200);
         }
 
         // Handle failed sequence
@@ -1398,9 +1399,15 @@
             
             showMessage(`Wrong! ${gameState.lives} ${gameState.lives === 1 ? 'life' : 'lives'} left`, 'error');
             
-            // Replay correct sequence then show retry
-            setTimeout(() => {
-                highlightCorrectSequence();
+            // Replay correct sequence then auto-retry
+            setTimeout(async () => {
+                await highlightCorrectSequence();
+                // Brief pause then auto-start listening again
+                await new Promise(r => setTimeout(r, 600));
+                gameState.phase = 'listening';
+                gameState.sequenceIndex = 0;
+                showMessage('Your turn!', '');
+                updateUI();
             }, 1000);
         }
         
@@ -1472,9 +1479,7 @@
             
             for (let i = 0; i < gameState.sequence.length; i++) {
                 const item = gameState.sequence[i];
-                const key = document.querySelector(`[data-note="${item.note}"]`);
-                const frequency = parseFloat(key.dataset.freq);
-                playNote(frequency, item.duration / 1000 * 0.8);
+                playNoteByName(item.note);
                 
                 await new Promise(resolve => setTimeout(resolve, item.duration * 0.8));
                 
@@ -1483,7 +1488,6 @@
                 }
             }
             
-            document.getElementById('retryLevel').style.display = 'inline-block';
         }
 
         // Show level announcement
@@ -1513,39 +1517,13 @@
             document.getElementById('livesValue').textContent = '❤️'.repeat(gameState.lives) + '🖤'.repeat(3 - gameState.lives);
             
             const phase = document.getElementById('gamePhase');
-            const startBtn = document.getElementById('startRound');
-            const retryBtn = document.getElementById('retryLevel');
-            const nextBtn = document.getElementById('nextLevel');
             
             switch (gameState.phase) {
-                case 'waiting':
-                    phase.textContent = 'Ready to start!';
-                    startBtn.style.display = 'inline-block';
-                    retryBtn.style.display = 'none';
-                    nextBtn.style.display = 'none';
-                    break;
-                case 'playing':
-                    phase.textContent = 'Listen carefully...';
-                    startBtn.style.display = 'none';
-                    retryBtn.style.display = 'none';
-                    nextBtn.style.display = 'none';
-                    break;
-                case 'listening':
-                    phase.textContent = 'Your turn!';
-                    startBtn.style.display = 'none';
-                    retryBtn.style.display = 'none';
-                    nextBtn.style.display = 'none';
-                    break;
-                case 'success':
-                    phase.textContent = 'Excellent!';
-                    startBtn.style.display = 'none';
-                    retryBtn.style.display = 'none';
-                    break;
-                case 'failure':
-                    phase.textContent = 'Try again';
-                    startBtn.style.display = 'none';
-                    nextBtn.style.display = 'none';
-                    break;
+                case 'waiting': phase.textContent = ''; break;
+                case 'playing': phase.textContent = ''; break;
+                case 'listening': phase.textContent = 'Your turn!'; break;
+                case 'success': phase.textContent = ''; break;
+                case 'failure': phase.textContent = ''; break;
             }
             
             // Update progress bar based on sequence progress
@@ -1682,31 +1660,7 @@
             });
             
             // Start round button (for subsequent rounds)
-            document.getElementById('startRound').addEventListener('click', function() {
-                playSequence(gameState.sequence);
-            });
-            
-            // Next level button
-            document.getElementById('nextLevel').addEventListener('click', function() {
-                gameState.currentLevel++;
-                showLevelAnnouncement(gameState.currentLevel);
-                document.getElementById('nextLevel').style.display = 'none';
-                setTimeout(() => {
-                    startNewRound();
-                    setTimeout(() => playSequence(gameState.sequence), 500);
-                }, 1500);
-            });
-            
-            // Retry level button
-            document.getElementById('retryLevel').addEventListener('click', function() {
-                document.getElementById('retryLevel').style.display = 'none';
-                gameState.phase = 'playing';
-                gameState.sequenceIndex = 0;
-                gameState.userInput = [];
-                updateUI();
-                
-                setTimeout(() => playSequence(gameState.sequence), 500);
-            });
+            // Buttons removed — game flow is now automatic
             
             // Piano key event listeners - NO DELAYS, INSTANT RESPONSE
             const keys = document.querySelectorAll('.key');
