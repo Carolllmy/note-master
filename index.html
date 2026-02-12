@@ -508,20 +508,13 @@
 
         .game-messages {
             text-align: center;
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 45vh;
-            z-index: 10;
+            height: 4rem;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
-            pointer-events: none;
-        }
-        
-        .game-messages button {
-            pointer-events: auto;
+            gap: 0.75rem;
+            flex-shrink: 0;
         }
 
         .message {
@@ -546,7 +539,9 @@
         }
 
         .piano-container {
-            margin-top: auto;
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
             padding: 0;
             overflow: hidden;
             width: 100%;
@@ -557,6 +552,7 @@
             display: flex;
             justify-content: flex-start;
             width: 100%;
+            height: 100%;
             margin: 0;
         }
 
@@ -577,7 +573,7 @@
 
         .key.white {
             width: calc(100% / 8);
-            height: 40vh;
+            height: 100%;
             background: var(--white-key);
             border: 1px solid var(--border);
             box-shadow: 0 2px 8px var(--key-shadow);
@@ -587,7 +583,7 @@
 
         .key.black {
             width: calc(100% / 13);
-            height: 25vh;
+            height: 60%;
             background: var(--black-key);
             border: 1px solid #000;
             box-shadow: 0 2px 8px var(--shadow);
@@ -817,7 +813,7 @@
             <div class="game-area">
                 <div class="game-messages">
                     <div class="message" id="gameMessage"></div>
-                    <button id="listenAgainBtn" style="display:none;background:none;border:none;color:var(--accent-bright);font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;padding:0.5rem 1rem;margin-top:0.5rem" onclick="replayCurrentSequence()">🔊 Listen Again</button>
+                    <button id="listenAgainBtn" style="display:none;background:none;border:none;color:var(--accent-bright);font-family:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;padding:0.4rem 0.75rem;white-space:nowrap" onclick="replayCurrentSequence()">🔊 Listen Again</button>
                 </div>
 
                 <div class="piano-container">
