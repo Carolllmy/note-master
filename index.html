@@ -808,6 +808,7 @@
             <div class="game-area">
                 <div class="game-messages">
                     <div class="message" id="gameMessage"></div>
+                    <button id="listenAgainBtn" style="display:none;background:none;border:none;color:var(--accent-bright);font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;padding:0.5rem 1rem;margin-top:0.5rem" onclick="replayCurrentSequence()">🔊 Listen Again</button>
                 </div>
 
                 <div class="piano-container">
@@ -1474,6 +1475,28 @@
         }
 
         // Replay correct sequence (audio only, no highlights)
+        async function replayCurrentSequence() {
+            if (gameState.phase !== 'listening') return;
+            gameState.phase = 'playing';
+            gameState.sequenceIndex = 0;
+            updateUI();
+            
+            for (let i = 0; i < gameState.sequence.length; i++) {
+                const item = gameState.sequence[i];
+                playNoteByName(item.note);
+                await new Promise(r => setTimeout(r, item.duration));
+                if (i < gameState.sequence.length - 1) {
+                    await new Promise(r => setTimeout(r, 50));
+                }
+            }
+            
+            await new Promise(r => setTimeout(r, 400));
+            gameState.phase = 'listening';
+            gameState.sequenceIndex = 0;
+            showMessage('Your turn!', '');
+            updateUI();
+        }
+        
         async function highlightCorrectSequence() {
             showMessage('Listen again...', '');
             
@@ -1518,12 +1541,13 @@
             
             const phase = document.getElementById('gamePhase');
             
+            const listenBtn = document.getElementById('listenAgainBtn');
             switch (gameState.phase) {
-                case 'waiting': phase.textContent = ''; break;
-                case 'playing': phase.textContent = ''; break;
-                case 'listening': phase.textContent = 'Your turn!'; break;
-                case 'success': phase.textContent = ''; break;
-                case 'failure': phase.textContent = ''; break;
+                case 'waiting': phase.textContent = ''; listenBtn.style.display = 'none'; break;
+                case 'playing': phase.textContent = ''; listenBtn.style.display = 'none'; break;
+                case 'listening': phase.textContent = 'Your turn!'; listenBtn.style.display = 'inline-block'; break;
+                case 'success': phase.textContent = ''; listenBtn.style.display = 'none'; break;
+                case 'failure': phase.textContent = ''; listenBtn.style.display = 'none'; break;
             }
             
             // Update progress bar based on sequence progress
