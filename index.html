@@ -539,6 +539,8 @@
         .piano-container {
             margin-top: auto;
             padding: 0;
+            overflow: hidden;
+            width: 100%;
         }
 
         .piano {
@@ -565,8 +567,8 @@
         }
 
         .key.white {
-            width: 12.5vw;
-            height: 45vh;
+            width: calc(100% / 8);
+            height: 40vh;
             background: var(--white-key);
             border: 1px solid var(--border);
             box-shadow: 0 2px 8px var(--key-shadow);
@@ -575,8 +577,8 @@
         }
 
         .key.black {
-            width: 8vw;
-            height: 28vh;
+            width: calc(100% / 13);
+            height: 25vh;
             background: var(--black-key);
             border: 1px solid #000;
             box-shadow: 0 2px 8px var(--shadow);
@@ -585,17 +587,12 @@
             color: #bbb;
         }
 
-        /* Black key positioning — between the correct white keys */
-        /* C# between C(0) and D(1): offset = 1 white key width - half black key width */
-        .key.black[data-note="C#4"] { left: calc(12.5vw * 1 - 4vw); }
-        /* D# between D(1) and E(2) */
-        .key.black[data-note="D#4"] { left: calc(12.5vw * 2 - 4vw); }
-        /* F# between F(3) and G(4) */
-        .key.black[data-note="F#4"] { left: calc(12.5vw * 4 - 4vw); }
-        /* G# between G(4) and A(5) */
-        .key.black[data-note="G#4"] { left: calc(12.5vw * 5 - 4vw); }
-        /* A# between A(5) and B(6) */
-        .key.black[data-note="A#4"] { left: calc(12.5vw * 6 - 4vw); }
+        /* Black key positioning — percentage of piano width */
+        .key.black[data-note="C#4"] { left: calc(12.5% * 1 - 100% / 26); }
+        .key.black[data-note="D#4"] { left: calc(12.5% * 2 - 100% / 26); }
+        .key.black[data-note="F#4"] { left: calc(12.5% * 4 - 100% / 26); }
+        .key.black[data-note="G#4"] { left: calc(12.5% * 5 - 100% / 26); }
+        .key.black[data-note="A#4"] { left: calc(12.5% * 6 - 100% / 26); }
 
         .key:active, .key.pressed {
             transform: translateY(2px);
@@ -797,6 +794,10 @@
                         <div class="stat-value" id="streakValue">0</div>
                         <div class="stat-label">Streak</div>
                     </div>
+                    <div class="stat">
+                        <div class="stat-value" id="livesValue">❤️❤️❤️</div>
+                        <div class="stat-label">Lives</div>
+                    </div>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill"></div>
@@ -877,6 +878,21 @@
         </div>
     </div>
 
+    <!-- Game Over Modal -->
+    <div class="modal-overlay" id="gameOverModal">
+        <div class="modal" style="text-align:center">
+            <h2 class="modal-title">Game Over</h2>
+            <div style="margin-bottom:1.5rem">
+                <div style="font-size:2.5rem;font-weight:700;color:var(--accent-bright)" id="finalScore">0</div>
+                <div style="font-size:0.9rem;color:var(--text-secondary)">Score</div>
+                <div style="margin-top:0.5rem;font-size:1rem;color:var(--text-secondary)">Level <span id="finalLevel">1</span></div>
+            </div>
+            <div style="font-size:0.95rem;font-weight:600;margin-bottom:1rem;color:var(--text-primary)">Save score to:</div>
+            <div id="scorePlayerList" style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.5rem"></div>
+            <button class="btn-secondary" onclick="hideGameOver();resetGame();showScreen('welcomeScreen');">Skip</button>
+        </div>
+    </div>
+
     <script>
         // Audio Context and Synthesis
         let audioContext;
@@ -891,12 +907,13 @@
             score: 0,
             streak: 0,
             highScore: 0,
-            phase: 'waiting', // waiting, playing, listening, replaying, success, failure
+            lives: 3,
+            phase: 'waiting',
             sequence: [],
             userInput: [],
             sequenceIndex: 0,
             lastInputTime: 0,
-            tolerance: 200, // ms timing tolerance
+            tolerance: 200,
             bpm: 100
         };
 
@@ -1368,19 +1385,85 @@
         function handleSequenceFailure() {
             gameState.phase = 'failure';
             gameState.streak = 0;
+            gameState.lives--;
             
-            // Save progress on failure too
+            updateUI();
+            
+            if (gameState.lives <= 0) {
+                // Game over!
+                showMessage(`Game Over! Score: ${gameState.score}`, 'error');
+                setTimeout(() => showGameOver(), 1500);
+                return;
+            }
+            
+            showMessage(`Wrong! ${gameState.lives} ${gameState.lives === 1 ? 'life' : 'lives'} left`, 'error');
+            
+            // Replay correct sequence then show retry
+            setTimeout(() => {
+                highlightCorrectSequence();
+            }, 1000);
+        }
+        
+        function showGameOver() {
+            // Save score for current player
             if (currentPlayer) {
                 updatePlayerScore(currentPlayer.id, gameState.score);
             }
             
-            updateUI();
-            showMessage('Not quite right. Try again!', 'error');
+            // Show game over overlay with score and player selection
+            const overlay = document.getElementById('gameOverModal');
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('finalLevel').textContent = gameState.currentLevel;
             
-            // Show the correct sequence
-            setTimeout(() => {
-                highlightCorrectSequence();
-            }, 1000);
+            // Render player list for score assignment
+            const profiles = loadProfiles();
+            const playerList = document.getElementById('scorePlayerList');
+            playerList.innerHTML = profiles.map(p => `
+                <div class="profile-card ${currentPlayer && currentPlayer.id === p.id ? 'selected' : ''}" onclick="assignScoreToPlayer(${p.id})" style="cursor:pointer">
+                    <div class="profile-avatar">
+                        ${p.avatar ? `<img src="${p.avatar}" alt="${p.name}">` : '👤'}
+                    </div>
+                    <div class="profile-name">${p.name}</div>
+                </div>
+            `).join('') + `
+                <div class="profile-card" onclick="createPlayerFromGameOver()" style="cursor:pointer">
+                    <div class="profile-avatar">➕</div>
+                    <div class="profile-name">New Player</div>
+                </div>
+            `;
+            
+            overlay.style.display = 'flex';
+        }
+        
+        function assignScoreToPlayer(profileId) {
+            updatePlayerScore(profileId, gameState.score);
+            setCurrentPlayer(profileId);
+            hideGameOver();
+            // Reset and go to welcome
+            resetGame();
+            showScreen('welcomeScreen');
+        }
+        
+        function createPlayerFromGameOver() {
+            hideGameOver();
+            showCreateProfileModal();
+            // After creating, the score will be assigned in the save handler
+            window._pendingScoreFromGameOver = gameState.score;
+        }
+        
+        function hideGameOver() {
+            document.getElementById('gameOverModal').style.display = 'none';
+        }
+        
+        function resetGame() {
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.streak = 0;
+            gameState.lives = 3;
+            gameState.phase = 'waiting';
+            gameState.sequence = [];
+            gameState.sequenceIndex = 0;
+            updateUI();
         }
 
         // Replay correct sequence (audio only, no highlights)
@@ -1427,6 +1510,7 @@
             document.getElementById('levelValue').textContent = gameState.currentLevel;
             document.getElementById('scoreValue').textContent = gameState.score;
             document.getElementById('streakValue').textContent = gameState.streak;
+            document.getElementById('livesValue').textContent = '❤️'.repeat(gameState.lives) + '🖤'.repeat(3 - gameState.lives);
             
             const phase = document.getElementById('gamePhase');
             const startBtn = document.getElementById('startRound');
@@ -1488,6 +1572,7 @@
             gameState.currentLevel = 1;
             gameState.score = 0;
             gameState.streak = 0;
+            gameState.lives = 3;
         }
 
         // Save progress
@@ -1553,6 +1638,14 @@
                 
                 const newProfile = createProfile(name, null, avatar);
                 setCurrentPlayer(newProfile.id);
+                
+                // If there's a pending score from game over, assign it
+                if (window._pendingScoreFromGameOver) {
+                    updatePlayerScore(newProfile.id, window._pendingScoreFromGameOver);
+                    window._pendingScoreFromGameOver = null;
+                    resetGame();
+                }
+                
                 hideCreateProfileModal();
                 showScreen('welcomeScreen');
                 document.getElementById('leaderboardBtn').style.display = 'block';
