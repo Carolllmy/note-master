@@ -889,9 +889,7 @@
                 <div style="font-size:0.9rem;color:var(--text-secondary)">Score</div>
                 <div style="margin-top:0.5rem;font-size:1rem;color:var(--text-secondary)">Level <span id="finalLevel">1</span></div>
             </div>
-            <div style="font-size:0.95rem;font-weight:600;margin-bottom:1rem;color:var(--text-primary)">Save score to:</div>
-            <div id="scorePlayerList" style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.5rem"></div>
-            <button class="btn-secondary" onclick="hideGameOver();resetGame();currentPlayer=null;showScreen('profileScreen');renderProfiles();">Skip</button>
+            <button class="btn-primary" onclick="hideGameOver();resetGame();currentPlayer=null;showScreen('profileScreen');renderProfiles();">Play Again</button>
         </div>
     </div>
 
@@ -979,26 +977,43 @@
                 
                 masterGain = audioContext.createGain();
                 masterGain.connect(audioContext.destination);
-                masterGain.gain.value = 0.8;
+                masterGain.gain.value = 1.5;
                 loadPianoSamples();
             }
         }
 
         // Real Steinway piano samples (University of Iowa) - PRE-DECODED
         let pianoSamples = {};
-        let pianoBuffers = {};
+        let pianoBuffers = {};  // decoded AudioBuffers for the 5 base samples
+        
+        // Note-to-sample mapping with pitch shift (semitones from base sample)
+        // Salamander Grand Piano (Yamaha C5) — sampled in minor thirds: C4, D#4, F#4, A4, C5
+        const NOTE_SAMPLE_MAP = {
+            'C4':  { sample: 'C4',  shift: 0 },
+            'C#4': { sample: 'C4',  shift: 1 },
+            'D4':  { sample: 'Ds4', shift: -1 },
+            'D#4': { sample: 'Ds4', shift: 0 },
+            'E4':  { sample: 'Ds4', shift: 1 },
+            'F4':  { sample: 'Fs4', shift: -1 },
+            'F#4': { sample: 'Fs4', shift: 0 },
+            'G4':  { sample: 'Fs4', shift: 1 },
+            'G#4': { sample: 'A4',  shift: -1 },
+            'A4':  { sample: 'A4',  shift: 0 },
+            'A#4': { sample: 'A4',  shift: 1 },
+            'B4':  { sample: 'C5',  shift: -1 },
+            'C5':  { sample: 'C5',  shift: 0 },
+        };
         
         async function loadPianoSamples() {
             try {
-                const resp = await fetch('piano-samples.json');
-                pianoSamples = await resp.json();
+                const resp = await fetch('salamander-samples.json');
+                const samples = await resp.json();
                 
-                // Pre-decode ALL samples into AudioBuffers for instant playback
+                // Decode the 5 base samples into AudioBuffers
                 const decodePromises = [];
-                for (const [note, dataUri] of Object.entries(pianoSamples)) {
+                for (const [note, b64] of Object.entries(samples)) {
                     const promise = (async () => {
                         try {
-                            const b64 = dataUri.split(',')[1];
                             const binary = atob(b64);
                             const bytes = new Uint8Array(binary.length);
                             for (let i = 0; i < binary.length; i++) {
@@ -1013,9 +1028,9 @@
                 }
                 
                 await Promise.all(decodePromises);
-                console.log('Pre-decoded Steinway samples for', Object.keys(pianoBuffers).length, 'notes');
+                console.log('Loaded Yamaha C5 Grand Piano samples:', Object.keys(pianoBuffers).length, 'base notes');
             } catch(e) { 
-                console.log('No piano samples found, using synth fallback'); 
+                console.log('No piano samples found, using synth fallback', e); 
             }
         }
         
@@ -1028,20 +1043,12 @@
                 audioContext.resume();
             }
             
-            // Find the note name from frequency
-            const noteForFreq = document.querySelector(`[data-freq="${frequency}"]`) ||
-                               document.querySelector(`.key[data-freq]`);
+            // Find the note name from frequency and use sample + pitch shift
+            const noteForFreq = document.querySelector(`[data-freq="${frequency}"]`);
             const noteName = noteForFreq ? noteForFreq.dataset.note : null;
             
-            if (noteName && pianoBuffers[noteName]) {
-                // Play pre-decoded sample INSTANTLY
-                const source = audioContext.createBufferSource();
-                source.buffer = pianoBuffers[noteName];
-                const gain = audioContext.createGain();
-                gain.gain.value = velocity;
-                source.connect(gain);
-                gain.connect(masterGain);
-                source.start(0); // Start immediately
+            if (noteName) {
+                playNoteByName(noteName);
                 return;
             }
             
@@ -1349,15 +1356,22 @@
         }
 
         // Handle user key press — PLAY SOUND FIRST, then check logic
-        // Play note directly by name — no frequency lookup, instant
+        // Play note directly by name — uses Yamaha C5 samples with pitch shifting
         function playNoteByName(noteName) {
             if (!audioContext) return;
             if (audioContext.state === 'suspended') audioContext.resume();
-            if (pianoBuffers[noteName]) {
+            
+            const mapping = NOTE_SAMPLE_MAP[noteName];
+            if (!mapping) return;
+            
+            const buffer = pianoBuffers[mapping.sample];
+            if (buffer) {
                 const source = audioContext.createBufferSource();
-                source.buffer = pianoBuffers[noteName];
+                source.buffer = buffer;
+                // Pitch shift: each semitone = 2^(1/12) ratio
+                source.playbackRate.value = Math.pow(2, mapping.shift / 12);
                 const gain = audioContext.createGain();
-                gain.gain.value = 0.7;
+                gain.gain.value = 1.0;
                 source.connect(gain);
                 gain.connect(masterGain);
                 source.start(0);
@@ -1451,51 +1465,14 @@
         }
         
         function showGameOver() {
-            // Save score for current player
+            // Auto-save score to current player
             if (currentPlayer) {
                 updatePlayerScore(currentPlayer.id, gameState.score);
             }
             
-            // Show game over overlay with score and player selection
-            const overlay = document.getElementById('gameOverModal');
             document.getElementById('finalScore').textContent = gameState.score;
             document.getElementById('finalLevel').textContent = gameState.currentLevel;
-            
-            // Render player list for score assignment
-            const profiles = loadProfiles();
-            const playerList = document.getElementById('scorePlayerList');
-            playerList.innerHTML = profiles.map(p => `
-                <div class="profile-card ${currentPlayer && currentPlayer.id === p.id ? 'selected' : ''}" onclick="assignScoreToPlayer(${p.id})" style="cursor:pointer">
-                    <div class="profile-avatar">
-                        ${p.avatar ? (getAvatarSvg(p.avatar) || '👤') : '👤'}
-                    </div>
-                    <div class="profile-name">${p.name}</div>
-                </div>
-            `).join('') + `
-                <div class="profile-card" onclick="createPlayerFromGameOver()" style="cursor:pointer">
-                    <div class="profile-avatar">➕</div>
-                    <div class="profile-name">New Player</div>
-                </div>
-            `;
-            
-            overlay.style.display = 'flex';
-        }
-        
-        function assignScoreToPlayer(profileId) {
-            updatePlayerScore(profileId, gameState.score);
-            hideGameOver();
-            resetGame();
-            // Go back to player selection
-            currentPlayer = null;
-            showScreen('profileScreen');
-            renderProfiles();
-        }
-        
-        function createPlayerFromGameOver() {
-            hideGameOver();
-            showCreateProfileModal();
-            // After creating, the score will be assigned in the save handler
-            window._pendingScoreFromGameOver = gameState.score;
+            document.getElementById('gameOverModal').style.display = 'flex';
         }
         
         function hideGameOver() {
